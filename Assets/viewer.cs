@@ -5,6 +5,7 @@ using Terrain.Tiles;
 using System.Collections;
 using System.IO;
 using System.Collections.Generic;
+using ExtensionMethods;
 
 public class viewer : MonoBehaviour {
 
@@ -34,7 +35,8 @@ public class viewer : MonoBehaviour {
     }
     private IEnumerator requestTile(int x, int y, int z)
     {
-        string url = "http://assets.agi.com/stk-terrain/v1/tilesets/world/tiles/" + x + "/" + y + "/" + z + ".terrain";
+        // todo: must be z/x/y in request, two top tiles are 0/0/0 (z/x/y) and 0/1/0 (z/y/y)
+        string url = $"http://assets.agi.com/stk-terrain/v1/tilesets/world/tiles/{x}/{y}/{z}.terrain";
 
         DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
         TerrainTile terrainTile;
@@ -55,7 +57,7 @@ public class viewer : MonoBehaviour {
 
             //create tile 
             var tile = new GameObject("tile x:" + x + " y:" + y + " z:" + z);
-            tile.AddComponent<MeshFilter>().mesh = terrainTile.GetMesh(x, y, z);
+            tile.AddComponent<MeshFilter>().mesh = terrainTile.GetMesh1(x, y, z);
 
 
             if (y==0)
