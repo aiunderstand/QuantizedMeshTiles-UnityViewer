@@ -57,7 +57,7 @@ public class viewer : MonoBehaviour {
 
             //create tile 
             var tile = new GameObject("tile x:" + x + " y:" + y + " z:" + z);
-            tile.AddComponent<MeshFilter>().mesh = terrainTile.GetMesh1(x, y, z);
+            tile.AddComponent<MeshFilter>().mesh = terrainTile.GetMesh(x, y, z);
 
 
             if (y==0)
