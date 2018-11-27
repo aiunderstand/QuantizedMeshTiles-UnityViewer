@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'UNITY_INSTANCE_ID' with 'UNITY_VERTEX_INPUT_INSTANCE_ID'
+
 Shader "VR/SpatialMapping/Wireframe2"
 {
 	Properties
@@ -28,7 +30,7 @@ Shader "VR/SpatialMapping/Wireframe2"
 			struct appdata
 			{
 				float4 vertex : POSITION;
-				UNITY_INSTANCE_ID
+				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
 			struct v2g

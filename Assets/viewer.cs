@@ -36,15 +36,18 @@ public class viewer : MonoBehaviour {
     private IEnumerator requestTile(int x, int y, int z)
     {
         // todo: must be z/x/y in request, two top tiles are 0/0/0 (z/x/y) and 0/1/0 (z/y/y)
-        string url = $"http://assets.agi.com/stk-terrain/v1/tilesets/world/tiles/{x}/{y}/{z}.terrain";
+        string url = $"https://assets.cesium.com/1/{x}/{y}/{z}.terrain?v=1.1.0";
 
         DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
         TerrainTile terrainTile;
         UnityWebRequest http = new UnityWebRequest(url);
+        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3OTk2ODFjOS1lY2ZjLTRjNGEtYjFlYi0wMTYwMjZiYTZmMDYiLCJpZCI6NDc4OSwiYXNzZXRzIjp7IjEiOnsidHlwZSI6IlRFUlJBSU4iLCJleHRlbnNpb25zIjpbdHJ1ZSx0cnVlLHRydWVdfX0sInNyYyI6IjI3MjZmNTYxLWEwM2UtNDFhZC04NGZmLTA2NDBkOTRkYWJmMiIsImlhdCI6MTU0MjA5ODc5NCwiZXhwIjoxNTQyMTAyMzk0fQ.43QlB4y9xuC3I31fMsaVFYVyNG2bsd1Kp39EojAACQU";
+        http.SetRequestHeader("accept", $"application/vnd.quantized-mesh,application/octet-stream;q=0.9,*/*;q=0.01,*/*;access_token={token}");
+
         http.downloadHandler = handler;
         yield return http.Send();
 
-        if (!http.isError)
+        if (!http.isNetworkError)
         {
             //get data
             MemoryStream stream = new MemoryStream(http.downloadHandler.data);
