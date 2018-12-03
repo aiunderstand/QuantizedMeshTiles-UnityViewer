@@ -8,7 +8,7 @@ namespace ExtensionMethods
         private const int MAX = 32767;
 
 
-        public static Mesh GetMesh(this TerrainTile t,  int x, int y, int z)
+        public static Mesh GetMesh(this TerrainTile t)
         {
             Mesh mesh = new Mesh();
 
