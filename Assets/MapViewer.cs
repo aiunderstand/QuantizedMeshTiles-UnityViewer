@@ -1,6 +1,5 @@
-﻿using Assets.ExtensionMethods;
-using BruTile;
-using ExtensionMethods;
+﻿using BruTile;
+using Terrain.ExtensionMethods;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;

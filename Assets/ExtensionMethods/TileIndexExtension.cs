@@ -1,6 +1,6 @@
 ﻿using BruTile;
 
-namespace Assets.ExtensionMethods
+namespace Terrain.ExtensionMethods
 {
     public static class TileIndexExtension
     {
