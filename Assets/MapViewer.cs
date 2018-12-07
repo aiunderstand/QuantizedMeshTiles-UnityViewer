@@ -7,6 +7,7 @@ using System.Linq;
 using Terrain.Tiles;
 using UnityEngine;
 using UnityEngine.Networking;
+using System.Diagnostics;
 
 namespace Terrain
 {
@@ -27,10 +28,13 @@ namespace Terrain
 
         readonly Dictionary<Vector2, GameObject> tileDb = new Dictionary<Vector2, GameObject>();
 
-        const int maxParallelRequests = 20;
+        const int maxParallelRequests = 4;
         Queue<downloadRequest> downloadQueue = new Queue<downloadRequest>();
         Dictionary<string, downloadRequest> pendingQueue = new Dictionary<string, downloadRequest>(maxParallelRequests);
-        
+
+        private Stopwatch sw = new Stopwatch();
+        int processedTileDebugCounter = 0;
+
         public enum TileService
         {
             WMS,
@@ -43,8 +47,7 @@ namespace Terrain
             public string Url;
             public TileService Service;
             public Vector2 TileId;
-
-
+           
             public downloadRequest(string url, TileService service, Vector2 tileId)
             {
                 Url = url;
@@ -56,6 +59,7 @@ namespace Terrain
         public void CreateTiles()
         {
             ClearTiles();
+            sw.Start();
 
             var schema = new TmsGlobalGeodeticTileSchema();
             var tileRange = TileTransform.WorldToTile(extent, zoomLevel.ToString(), schema);
@@ -95,6 +99,8 @@ namespace Terrain
             tileDb.Clear();
             downloadQueue.Clear();
             pendingQueue.Clear();
+            sw.Reset();
+            processedTileDebugCounter = 0;
         }
 
         private Vector3 GetTilePosition(TileIndex index, TileRange tileRange)
@@ -126,10 +132,14 @@ namespace Terrain
             }
             else
             {
-                Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading height data");
+                UnityEngine.Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading height data");
             }
 
             pendingQueue.Remove(url);
+            processedTileDebugCounter++;
+
+            if (pendingQueue.Count == 0)
+                UnityEngine.Debug.Log("finished: with max queue size " + maxParallelRequests + ". Time: " + sw.Elapsed.TotalMilliseconds + " miliseconds. Total requests: " + processedTileDebugCounter);
         }
 
         private IEnumerator requestWMSTile(string url, Vector2 tileId)
@@ -146,10 +156,14 @@ namespace Terrain
             }
             else
             {
-                Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading texture data");
+                UnityEngine.Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading texture data");
             }
 
             pendingQueue.Remove(url);
+            processedTileDebugCounter++;
+
+            if (pendingQueue.Count == 0)
+                UnityEngine.Debug.Log("finished: with max queue size " + maxParallelRequests + ". Time: " + sw.Elapsed.TotalMilliseconds + " miliseconds. Total requests: " + processedTileDebugCounter);
         }
 
         public void Update()
