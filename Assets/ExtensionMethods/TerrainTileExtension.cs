@@ -1,7 +1,7 @@
 ﻿using Terrain.Tiles;
 using UnityEngine;
 
-namespace ExtensionMethods
+namespace Terrain.ExtensionMethods
 {
     public static class TerrainTileExtension
     {
