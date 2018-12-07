@@ -8,7 +8,7 @@ namespace ExtensionMethods
         private const int MAX = 32767;
 
 
-        public static Mesh GetMesh(this TerrainTile t)
+        public static Mesh GetMesh(this TerrainTile t, float hOffset=0)
         {
             Mesh mesh = new Mesh();
 
@@ -29,7 +29,7 @@ namespace ExtensionMethods
                 var h1 = Terrain.Tiles.Mathf.Lerp(t.Header.MinimumHeight, t.Header.MaximumHeight, ((double)height / MAX));
 
                 uvs[i] = new Vector2((float)-x1, (float)-y1);
-                vertices[i] = new Vector3((float)-x1, (float)-h1, (float)-y1);
+                vertices[i] = new Vector3((float)-x1, (float)-h1 -hOffset, (float)-y1);
             }
 
             //fill triangles

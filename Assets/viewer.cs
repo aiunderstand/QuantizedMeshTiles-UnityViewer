@@ -4,71 +4,116 @@ using Terrain.Tiles;
 using System.Collections;
 using System.IO;
 using ExtensionMethods;
+using BruTile;
+using System.Linq;
+using System;
+using System.Collections.Generic;
 
 public class viewer : MonoBehaviour {
 
-    Vector2 location = new Vector2(16918, 12911);
-    GameObject tile;
-    public void CreateTile()
+    Extent extent = new Extent(4.88, 52.36, 4.92, 52.38); //part of Amsterdam, Netherlands in Latitude/Longitude (GPS) coordinates as boundingbox.
+    public int zoomLevel = 14;
+
+    public GameObject placeholderTile;
+    public string terrainUrl = @"https://saturnus.geodan.nl/tomt/data/tiles/{z}/{x}/{y}.terrain?v=1.0.0";
+    public string textureUrl = @"https://saturnus.geodan.nl/mapproxy/bgt/service?crs=EPSG%3A3857&service=WMS&version=1.1.1&request=GetMap&styles=&format=image%2Fjpeg&layers=bgt&bbox={xMin}%2C{yMin}%2C{xMax}%2C{yMax}&width=256&height=256&srs=EPSG%3A4326";
+    
+    Dictionary<Vector2, GameObject> tileDb = new Dictionary<Vector2, GameObject>();
+
+    public void CreateTiles()
     {
-        StartCoroutine(requestQMTile((int)location.x, (int)location.y, 14));
+        ClearTiles();
+        
+        var schema = new TmsGlobalGeodeticTileSchema();
+        var tileRange = TileTransform.WorldToTile(extent, zoomLevel.ToString(), schema);
+        
+        var tiles = schema.GetTileInfos(extent, zoomLevel.ToString()).ToList();
+        
+        //immediately draw placeholder tile and fire request for texture and height. Depending on which one returns first, update place holder.
+        foreach (var t in tiles)
+        {
+            //draw placeholder tile
+            var tile = GameObject.Instantiate(placeholderTile);
+            tile.name = $"tile /{t.Index.Level.ToString()}/{t.Index.Col.ToString()}/{t.Index.Row.ToString()}";
+            tile.transform.position = SetTilePosition(t.Index, tileRange);
+            
+            tileDb.Add(new Vector2(t.Index.Col,t.Index.Row), tile);
+
+            //get tile texture data
+            Extent subtileExtent = TileTransform.TileToWorld(new TileRange(t.Index.Col, t.Index.Row), t.Index.Level.ToString(), schema);
+            StartCoroutine(requestWMSTile(subtileExtent,t.Index.Col, t.Index.Row));
+            
+            //get tile height data (
+            StartCoroutine(requestQMTile(t.Index.Col, t.Index.Row, int.Parse(t.Index.Level)));
+        }
+    }
+
+    private void ClearTiles()
+    {
+        if (tileDb.Count > 0)
+        {
+            foreach (var t in tileDb)
+            {
+                Destroy(t.Value);
+            }
+        }
+
+        tileDb.Clear();
+    }
+
+    private Vector3 SetTilePosition(TileIndex index, TileRange tileRange)
+    {
+        return new Vector3((index.Col - tileRange.FirstCol) * -360f, 0, (index.Row - tileRange.FirstRow) * 180);
     }
 
     private IEnumerator requestQMTile(int x, int y, int z)
     {
-        string url = $"https://saturnus.geodan.nl/tomt/data/tiles/{z}/{x}/{y}.terrain?v=1.0.0";
-       
+        var url = terrainUrl.Replace("{x}", x.ToString()).Replace("{y}", y.ToString()).Replace("{z}", z.ToString());
+
         DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
         TerrainTile terrainTile;
-        UnityWebRequest http = new UnityWebRequest(url);
-  
-        http.downloadHandler = handler;
-        yield return http.SendWebRequest();
+        UnityWebRequest www = new UnityWebRequest(url);
 
-        if (!http.isNetworkError)
+        www.downloadHandler = handler;
+        yield return www.SendWebRequest();
+
+        if (!www.isNetworkError && !www.isHttpError)
         {
             //get data
-            MemoryStream stream = new MemoryStream(http.downloadHandler.data);
+            MemoryStream stream = new MemoryStream(www.downloadHandler.data);
 
             //parse into tile data structure
             terrainTile = TerrainTileParser.Parse(stream);
 
-            //create unity tile with tile data structure
-            tile = new GameObject("tile x:" + x + " y:" + y + " z:" + z);
-            tile.AddComponent<MeshFilter>().mesh = terrainTile.GetMesh();
-           
-            tile.transform.localScale = new Vector3(0.5f, -1f, 1);
-            tile.transform.position = new Vector3((x-location.x) * -180f, 0, (y-location.y) * -180f);
-
-            StartCoroutine(requestWMSTile(0, 0, 0));
+            //update tile with height data
+            tileDb[new Vector2(x,y)].GetComponent<MeshFilter>().sharedMesh = terrainTile.GetMesh(-44); //height offset is manually done to nicely align height data with place holder at 0
+            tileDb[new Vector2(x, y)].transform.rotation = Quaternion.Euler(new Vector3(180, 0, 0));
+            tileDb[new Vector2(x, y)].transform.localScale = new Vector3(1, 1, 1);
         }
         else
         {
-            Debug.Log("Error loading tile");
+            Debug.LogError("Tile: [" + x + " " + y + "] Error loading height data");
         }
     }
 
-    private IEnumerator requestWMSTile(int x, int y, int z)
+    private IEnumerator requestWMSTile(Extent extent, int x, int y)
     {
-        string url = $"https://saturnus.geodan.nl/mapproxy/bgt/service?crs=EPSG%3A3857&service=WMS&version=1.1.1&request=GetMap&styles=&format=image%2Fjpeg&layers=bgt&bbox=5.866699218749994%2C51.844482421875%2C5.877685546875001%2C51.85546875&width=256&height=256&srs=EPSG%3A4326";
-      
+        var url = textureUrl.Replace("{xMin}", extent.MinX.ToString()).Replace("{yMin}", extent.MinY.ToString()).Replace("{xMax}", extent.MaxX.ToString()).Replace("{yMax}", extent.MaxY.ToString()).Replace(",", ".");
+
         UnityWebRequest www = UnityWebRequestTexture.GetTexture(url);
         yield return www.SendWebRequest();
 
-        if (!www.isNetworkError || !www.isHttpError)
+        if (!www.isNetworkError && !www.isHttpError)
         {
             Texture2D myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-            myTexture.filterMode = FilterMode.Point;
-            
-            var tempMaterial = new Material(Shader.Find("Unlit/Texture"));
-            tempMaterial.mainTexture = myTexture;
-            tempMaterial.SetTextureScale("_MainTex", new Vector2(-0.0028f, -0.005f));
-            tempMaterial.SetTextureOffset("_MainTex", new Vector2(-0.5f, 0.5f));
-            tile.AddComponent<MeshRenderer>().sharedMaterial = tempMaterial;
+            //myTexture.filterMode = FilterMode.Point;
+
+            //update tile with height data
+            tileDb[new Vector2(x, y)].GetComponent<MeshRenderer>().material.mainTexture = myTexture;           
         }
         else
         {
-            Debug.Log("Error loading tile");
+            Debug.LogError("Tile: [" + x + " " + y + "] Error loading texture data");
         }
     }
 }
