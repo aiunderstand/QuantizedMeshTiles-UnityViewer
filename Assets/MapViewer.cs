@@ -33,9 +33,14 @@ namespace Terrain
         Queue<downloadRequest> downloadQueue = new Queue<downloadRequest>();
         Dictionary<string, downloadRequest> pendingQueue = new Dictionary<string, downloadRequest>(maxParallelRequests);
 
+        Viewport viewport;
+        float yOffset = 0;
+        float xOffset = 0;
+
+        //debuggin'
         private Stopwatch sw = new Stopwatch();
         int processedTileDebugCounter = 0;
-
+        
         public enum TileService
         {
             WMS,
@@ -62,11 +67,16 @@ namespace Terrain
             ClearTiles();
             sw.Start();
 
+            viewport = new Viewport(Camera.main.transform.position, 180, 90);
+
             var schema = new TmsGlobalGeodeticTileSchema();
             var tileRange = TileTransform.WorldToTile(extent, zoomLevel.ToString(), schema);
 
+            var tilesOrigin = schema.GetTileInfos(extent, 13.ToString()).ToList();   //refactor when done experimenting scale
             var tiles = schema.GetTileInfos(extent, zoomLevel.ToString()).ToList();
-
+            yOffset = (float) Math.Abs(tiles[0].Extent.MinY - tilesOrigin[0].Extent.MinY);
+            xOffset = (float) Math.Abs(tiles[0].Extent.MinX - tilesOrigin[0].Extent.MinX);
+            UnityEngine.Debug.Log(xOffset);
             //immediately draw placeholder tile and fire request for texture and height. Depending on which one returns first, update place holder.
             foreach (var t in tiles)
             {
@@ -83,6 +93,8 @@ namespace Terrain
                 //get tile height data (
                 var qmUrl = terrainUrl.Replace("{x}", t.Index.Col.ToString()).Replace("{y}", t.Index.Row.ToString()).Replace("{z}", int.Parse(t.Index.Level).ToString());
                 downloadQueue.Enqueue(new downloadRequest(qmUrl, TileService.QM, new Vector3(t.Index.Col, t.Index.Row, int.Parse(t.Index.Level))));
+
+                
             }
         }
 
@@ -108,8 +120,10 @@ namespace Terrain
 
         private Vector3 GetTilePosition(TileIndex index, TileRange tileRange)
         {
-            float tileOffset = 360 * ComputeScaleFactor(int.Parse(index.Level)) / 2; //makes sure that tile left corner is in 0,0
-            return new Vector3((index.Col - tileRange.FirstCol) * (-360f * ComputeScaleFactor(int.Parse(index.Level))) - tileOffset, 0, (index.Row - tileRange.FirstRow) * (360f * ComputeScaleFactor(int.Parse(index.Level))) + tileOffset); //should be refactored when experimenting with offset and scale is done
+            float tileOffsetRow = yOffset * 360 * ComputeScaleFactor(int.Parse(index.Level)) +(0.5f * 360 * ComputeScaleFactor(int.Parse(index.Level))); //makes sure that tile left corner is in CENTER
+            float tileOffsetCol = xOffset * 360 * ComputeScaleFactor(int.Parse(index.Level)) +(0.5f * 360 * ComputeScaleFactor(int.Parse(index.Level))); //makes sure that tile left corner is in CENTER
+
+            return new Vector3((index.Col - tileRange.FirstCol) * (-360 * ComputeScaleFactor(int.Parse(index.Level))) - tileOffsetCol, 0, (index.Row - tileRange.FirstRow) * (360 * ComputeScaleFactor(int.Parse(index.Level))) - tileOffsetRow); //should be refactored when experimenting with offset and scale is done
         }
 
         private IEnumerator requestQMTile(string url, Vector3 tileId)
@@ -152,17 +166,17 @@ namespace Terrain
             switch (z)
             {
                 case 13:
-                    return 0.5f;
+                    return 1f;
                 case 14:
-                    return 0.25f;
-                case 15:
-                    return 0.125f;
-                case 16:
-                    return 0.0625f;
-                case 17:
-                    return 0.03125f;
-                default:
                     return 0.5f;
+                case 15:
+                    return 0.25f;
+                case 16:
+                    return 0.125f;
+                case 17:
+                    return 0.0625f;
+                default:
+                    return 1f;
             }
         }
 
