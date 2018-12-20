@@ -1,0 +1,268 @@
+﻿using BruTile;
+using Terrain.ExtensionMethods;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Terrain.Tiles;
+using UnityEngine;
+using UnityEngine.Networking;
+using System;
+
+namespace Terrain
+{
+    public class MapViewer : MonoBehaviour
+    {
+        [SerializeField]
+        private readonly Extent extent = new Extent(4.88, 52.36, 4.92, 52.38); //part of Amsterdam, Netherlands in Latitude/Longitude (GPS) coordinates as boundingbox.
+        [SerializeField]
+        private int zoomLevel = 13;
+        [SerializeField]
+        private GameObject placeholderTile;
+
+        private string terrainUrl;
+        bool useWorld = true;
+        private string geodanTerrain = @"https://saturnus.geodan.nl/tomt/data/tiles/{z}/{x}/{y}.terrain?v=1.0.0"; //max zoom is 17!
+        private string cesiumTerrain = @"https://maps.tilehosting.com/data/terrain-quantized-mesh/{z}/{x}/{y}.terrain?key=irAs6FzTF3gJ9ArfQPjh"; //max zoom is 13!       
+
+        private string textureUrl;
+        bool useSatellite = true;
+        private string geodanTerrainCover= @"https://saturnus.geodan.nl/mapproxy/bgt/service?crs=EPSG%3A3857&service=WMS&version=1.1.1&request=GetMap&styles=&format=image%2Fjpeg&layers=bgt&bbox={xMin}%2C{yMin}%2C{xMax}%2C{yMax}&width=256&height=256&srs=EPSG%3A4326";
+        private string cesiumTerrainCover = @"https://maps.tilehosting.com/data/satellite/{z}/{x}/{y}.jpg?key=irAs6FzTF3gJ9ArfQPjh";
+
+        private string buildingsUrl = @"https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/tiles/{id}.b3dm";
+        private const int tilesize = 180;
+
+        // de dam in amsterdam is used as reference "WGS84" coordinate.
+        Vector2 referenceWGS84 = new Vector2(4.892504f, 52.373043f);
+        float UnityUnitsPerGraadX = 68600;
+        float UnityUnitsPerGraadY = 111300;
+        readonly Dictionary<Vector3, GameObject> tileDb = new Dictionary<Vector3, GameObject>();
+
+        const int maxParallelRequests = 4;
+        Queue<downloadRequest> downloadQueue = new Queue<downloadRequest>();
+        Dictionary<string, downloadRequest> pendingQueue = new Dictionary<string, downloadRequest>(maxParallelRequests);
+
+        public enum TileService
+        {
+            WMS,
+            QM
+        }
+
+        public struct downloadRequest
+        {
+
+            public string Url;
+            public TileService Service;
+            public Vector3 TileId;
+
+            public downloadRequest(string url, TileService service, Vector3 tileId)
+            {
+                Url = url;
+                Service = service;
+                TileId = tileId;
+            }
+        }
+
+        private void Awake()
+        {
+            LoadMap();
+        }
+
+        public void LoadMap()
+        {
+            ClearTiles();
+
+            //settings should be refactored to settings class
+            if (useWorld)
+                terrainUrl = cesiumTerrain;
+            else
+                terrainUrl = geodanTerrain;
+
+            if (useSatellite)
+                textureUrl = cesiumTerrainCover;
+            else
+                textureUrl = geodanTerrainCover;
+
+
+
+            var schema = new TmsGlobalGeodeticTileSchema();
+            var tileRange = TileTransform.WorldToTile(extent, zoomLevel.ToString(), schema);
+
+            var tiles = schema.GetTileInfos(extent, zoomLevel.ToString()).ToList();
+
+            //immediately draw placeholder tile and fire request for texture and height. Depending on which one returns first, update place holder.
+            foreach (var t in tiles)
+            {
+                //draw placeholder tile
+                GameObject tile = DrawPlaceHolder(tileRange, t);
+
+                tileDb.Add(new Vector3(t.Index.Col, t.Index.Row, int.Parse(t.Index.Level)), tile);
+
+                //get tile texture data
+                if (!useSatellite)
+                {
+                    Extent subtileExtent = TileTransform.TileToWorld(new TileRange(t.Index.Col, t.Index.Row), t.Index.Level.ToString(), schema);
+
+                    var url = textureUrl.Replace("{xMin}", subtileExtent.MinX.ToString()).Replace("{yMin}", subtileExtent.MinY.ToString()).Replace("{xMax}", subtileExtent.MaxX.ToString()).Replace("{yMax}", subtileExtent.MaxY.ToString()).Replace(",", "."); //WMS
+                    downloadQueue.Enqueue(new downloadRequest(url, TileService.WMS, new Vector3(t.Index.Col, t.Index.Row, int.Parse(t.Index.Level))));
+                }
+
+                //get tile height data (
+                var qmUrl = terrainUrl.Replace("{x}", t.Index.Col.ToString()).Replace("{y}", t.Index.Row.ToString()).Replace("{z}", int.Parse(t.Index.Level).ToString());
+                downloadQueue.Enqueue(new downloadRequest(qmUrl, TileService.QM, new Vector3(t.Index.Col, t.Index.Row, int.Parse(t.Index.Level))));
+            }
+
+            if (useSatellite)
+            {
+                var schema2 = new WebMercator();
+                var tiles2 = schema2.GetTileInfos(extent, zoomLevel.ToString()).ToList();
+
+                foreach (var t in tiles2)
+                {
+                    var url = textureUrl.Replace("{x}", t.Index.Col.ToString()).Replace("{y}", t.Index.Row.ToString()).Replace("{z}", int.Parse(t.Index.Level).ToString()); //WMTS
+                    downloadQueue.Enqueue(new downloadRequest(url, TileService.WMS, new Vector3(t.Index.Col, t.Index.Row, int.Parse(t.Index.Level))));
+                }
+            }
+        }
+
+        private GameObject DrawPlaceHolder(TileRange tileRange, TileInfo t)
+        {
+            var tile = Instantiate(placeholderTile);
+            tile.name = $"tile/{t.Index.ToIndexString()}";
+            tile.transform.position = GetTilePosition(t.Index, tileRange);
+            tile.transform.localScale = new Vector3(ComputeScaleFactorX(int.Parse(t.Index.Level)), 1, ComputeScaleFactorY(int.Parse(t.Index.Level)));
+            return tile;
+        }
+
+        private void ClearTiles()
+        {
+            tileDb.ToList().ForEach(t => Destroy(t.Value));
+            tileDb.Clear();
+            downloadQueue.Clear();
+            pendingQueue.Clear();         
+        }
+
+        private Vector3 GetTilePosition(TileIndex index, TileRange tileRange)
+        {
+
+            double tegelbreedte = tilesize / Math.Pow(2, int.Parse(index.Level)); //tegelbreedte in graden
+            double originX = ((index.Col + 0.5) * tegelbreedte) - 180;
+            double originY = ((index.Row + 0.5) * tegelbreedte) - 90;
+            double X = (originX - referenceWGS84.x) * UnityUnitsPerGraadX;
+            double Y = (originY - referenceWGS84.y) * UnityUnitsPerGraadY;
+            return new Vector3((float)X, 0, (float)Y);
+
+        }
+
+        private IEnumerator requestQMTile(string url, Vector3 tileId)
+        {
+            DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
+            TerrainTile terrainTile;
+            UnityWebRequest www = new UnityWebRequest(url);
+
+            www.downloadHandler = handler;
+            yield return www.SendWebRequest();
+
+            if (!www.isNetworkError && !www.isHttpError)
+            {
+                //get data
+                MemoryStream stream = new MemoryStream(www.downloadHandler.data);
+
+                //parse into tile data structure
+                terrainTile = TerrainTileParser.Parse(stream);
+
+                //update tile with height data
+                tileDb[tileId].GetComponent<MeshFilter>().sharedMesh = terrainTile.GetMesh(-44); //height offset is manually done to nicely align height data with place holder at 0
+                tileDb[tileId].transform.localScale = new Vector3(ComputeScaleFactorX((int)tileId.z), 1, ComputeScaleFactorY((int)tileId.z));
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading height data");
+            }
+
+            pendingQueue.Remove(url);           
+        }
+
+        private float ComputeScaleFactorX(int z)
+        {
+            return (float)(UnityUnitsPerGraadX / Math.Pow(2, z));
+        }
+
+        private float ComputeScaleFactorY(int z)
+        {
+            return (float)(UnityUnitsPerGraadY / Math.Pow(2, z));
+        }
+
+        private IEnumerator requestWMSTile(string url, Vector3 tileId)
+        {
+            UnityWebRequest www = UnityWebRequestTexture.GetTexture(url);
+            yield return www.SendWebRequest();
+
+            if (!www.isNetworkError && !www.isHttpError)
+            {
+                Texture2D myTexture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+
+                //update tile with height data
+                tileDb[tileId].GetComponent<MeshRenderer>().material.mainTexture = myTexture;
+            }
+            else
+            {
+                UnityEngine.Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading texture data");
+            }
+
+            pendingQueue.Remove(url);           
+        }
+
+        public void Update()
+        {
+
+            if (pendingQueue.Count < maxParallelRequests && downloadQueue.Count > 0)
+            {
+                var request = downloadQueue.Dequeue();
+                pendingQueue.Add(request.Url, request);
+
+                //fire request
+                switch (request.Service)
+                {
+                    case TileService.QM:
+                        StartCoroutine(requestQMTile(request.Url, request.TileId));
+                        break;
+                    case TileService.WMS:
+                        StartCoroutine(requestWMSTile(request.Url, request.TileId));
+                        break;
+                }
+            }
+        }
+
+        public void ZoomIn()
+        {
+            zoomLevel++;
+            LoadMap();
+        }
+
+        public void ZoomOut()
+        {
+            zoomLevel--;
+            LoadMap();
+        }
+
+        public void ToggleTerrain(float value)
+        {
+            if (value == 1)
+                useWorld = false;
+            else
+                useWorld = true;
+        }
+
+        public void ToggleTerrainCover(float value)
+        {
+            if (value == 1)
+                useSatellite = false;
+            else
+                useSatellite = true;
+        }
+    }
+
+
+}
