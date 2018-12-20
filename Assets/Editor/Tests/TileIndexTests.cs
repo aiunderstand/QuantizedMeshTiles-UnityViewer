@@ -20,6 +20,5 @@ namespace Terrain.Tests
             Assert.IsTrue(index == "0/100/200");
         }
     }
-
 }
 
