@@ -16,7 +16,12 @@ namespace Terrain
     public class MapViewer : MonoBehaviour
     {
         [SerializeField]
-        private readonly Extent extent = new Extent(4.88, 52.36, 4.92, 52.38); //part of Amsterdam, Netherlands in Latitude/Longitude (GPS) coordinates as boundingbox.
+        private Extent extent;
+
+        private readonly Extent Amsterdam = new Extent(4.88, 52.36, 4.92, 52.38); //Amsterdam, Netherlands
+        private readonly Extent Ispra = new Extent(8.57, 45.78, 8.67, 45.85); //EU Joint Research Centre in Ispra, Italy
+        private readonly Extent Kongsberg = new Extent(9.61, 59.64, 9.70, 59.69); //Kongsberg, Norway
+
         [SerializeField]
         private int zoomLevel = 13;
         [SerializeField]
@@ -35,8 +40,8 @@ namespace Terrain
         private string buildingsUrl = @"https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/tiles/{id}.b3dm";
         private const int tilesize = 180;
 
-        // de dam in amsterdam is used as reference "WGS84" coordinate.
-        Vector2 referenceWGS84 = new Vector2(4.892504f, 52.373043f);
+        //implement will use floating origin
+        Vector2 floatingOrigin;
         const float UnityUnitsPerGraadX = 68600;
         const float UnityUnitsPerGraadY = 111300;
         readonly Dictionary<Vector3, GameObject> tileDb = new Dictionary<Vector3, GameObject>();
@@ -48,6 +53,10 @@ namespace Terrain
         [UsedImplicitly]
         private void Awake()
         {
+            //hack 
+            floatingOrigin = new Vector2((float) Amsterdam.CenterX, (float) Amsterdam.CenterY);
+            extent = Amsterdam;
+
             LoadMap();
         }
 
@@ -130,8 +139,8 @@ namespace Terrain
             var tegelbreedte = tilesize / Math.Pow(2, int.Parse(index.Level)); //tegelbreedte in graden
             var originX = ((index.Col + 0.5) * tegelbreedte) - 180;
             var originY = ((index.Row + 0.5) * tegelbreedte) - 90;
-            var X = (originX - referenceWGS84.x) * UnityUnitsPerGraadX;
-            var Y = (originY - referenceWGS84.y) * UnityUnitsPerGraadY;
+            var X = (originX - floatingOrigin.x) * UnityUnitsPerGraadX;
+            var Y = (originY - floatingOrigin.y) * UnityUnitsPerGraadY;
             return new Vector3((float)X, 0, (float)Y);
         }
 
@@ -159,7 +168,7 @@ namespace Terrain
             }
             else
             {
-                Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading height data");
+                Debug.Log("Tile: [" + tileId.x + " " + tileId.y + "] Error loading height data");
             }
 
             pendingQueue.Remove(url);           
@@ -189,7 +198,7 @@ namespace Terrain
             }
             else
             {
-                Debug.LogError("Tile: [" + tileId.x + " " + tileId.y + "] Error loading texture data");
+                Debug.Log("Tile: [" + tileId.x + " " + tileId.y + "] Error loading texture data");
             }
 
             pendingQueue.Remove(url);           
@@ -218,24 +227,81 @@ namespace Terrain
 
         public void ZoomIn()
         {
-            zoomLevel++;
-            LoadMap();
+            //hacky, we should implement some sort of checking of tileset bounds
+            if (useWorld) 
+            {
+                if ((zoomLevel + 1) <= 13) //max zoom of world terrain tile is 13
+                {
+                    zoomLevel++;
+                    LoadMap();
+                }
+            }
+            else
+            {
+                if (zoomLevel + 1 <= 17) //max zoom of geodan terrain tile is 17
+                {
+                    zoomLevel++;
+                    LoadMap();
+                }
+            }
         }
 
         public void ZoomOut()
         {
-            zoomLevel--;
-            LoadMap();
+            if ((zoomLevel - 1) >=0)
+            {
+                zoomLevel--;
+                LoadMap();
+            }            
         }
 
         public void ToggleTerrain(float value)
         {
             useWorld = value == 1 ? false : true;
+
+            //update zoom level and reload
+            if (useWorld)
+            {
+                if (zoomLevel > 13)
+                    zoomLevel = 13;
+
+                LoadMap();
+            }
+            else
+            {
+                if (zoomLevel > 17)
+                    zoomLevel = 17;
+
+                LoadMap();
+            }
         }
 
         public void ToggleTerrainCover(float value)
         {
             useSatellite = value == 1 ? false : true;
+
+            LoadMap();
+        }
+
+        public void GotoLocation(string locationName)
+        {
+            switch (locationName)
+            {
+                case "Amsterdam":
+                    extent = Amsterdam;
+                    floatingOrigin = new Vector2((float)Amsterdam.CenterX, (float)Amsterdam.CenterY);
+                    break;
+                case "Ispra":
+                    extent = Ispra;
+                    floatingOrigin = new Vector2((float)Ispra.CenterX, (float)Ispra.CenterY);
+                    break;
+                case "Kongsberg":                    
+                    extent = Kongsberg;
+                    floatingOrigin = new Vector2((float)Kongsberg.CenterX, (float)Kongsberg.CenterY);
+                    break;
+            }
+
+            LoadMap();
         }
     }
 }
