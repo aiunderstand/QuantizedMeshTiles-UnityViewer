@@ -3,7 +3,7 @@ namespace Assets.Scripts
 {
     public enum TileServiceType
     {
-        WMS,
+        TMS,
         QM
     }
 }

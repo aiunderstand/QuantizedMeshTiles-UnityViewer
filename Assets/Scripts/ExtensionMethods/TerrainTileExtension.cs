@@ -1,4 +1,5 @@
-﻿using Terrain.Tiles;
+﻿using BruTile;
+using Terrain.Tiles;
 using UnityEngine;
 
 namespace Terrain.ExtensionMethods
@@ -8,7 +9,7 @@ namespace Terrain.ExtensionMethods
         private const int MAX = 32767;
 
 
-        public static Mesh GetMesh(this TerrainTile t, float hOffset = 0)
+        public static Mesh GetMesh(this TerrainTile t, Extent extent, float hOffset = 0)
         {
             Mesh mesh = new Mesh();
 
@@ -24,11 +25,11 @@ namespace Terrain.ExtensionMethods
                 var yCoor = t.VertexData.v[i];
                 var height = t.VertexData.height[i];
 
-                var x1 = Terrain.Tiles.Mathf.Lerp(-90, 90, ((double)(xCoor) / MAX));
-                var y1 = Terrain.Tiles.Mathf.Lerp(-90, 90, ((double)(yCoor) / MAX));
+                var x1 = Terrain.Tiles.Mathf.Lerp(extent.MinX, extent.MaxX, ((double)(xCoor) / MAX));
+                var y1 = Terrain.Tiles.Mathf.Lerp(extent.MinY, extent.MaxY, ((double)(yCoor) / MAX));
                 var h1 = Terrain.Tiles.Mathf.Lerp(t.Header.MinimumHeight, t.Header.MaximumHeight, ((double)height / MAX));
 
-                uvs[i] = new Vector2((float)(x1 / 180), (float)(y1 / 180));
+                uvs[i] = new Vector2((float)(x1 / extent.MaxX) , (float)(y1 /extent.MaxY));
                 vertices[i] = new Vector3((float)x1, (float)h1, (float)y1);
             }
 
