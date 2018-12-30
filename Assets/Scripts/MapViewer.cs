@@ -10,6 +10,7 @@ using UnityEngine.Networking;
 using System;
 using JetBrains.Annotations;
 using Assets.Scripts;
+using TMPro;
 
 namespace Terrain
 {
@@ -22,8 +23,8 @@ namespace Terrain
         private readonly Extent Ispra = new Extent(8.57, 45.78, 8.67, 45.85); //EU Joint Research Centre in Ispra, Italy
         private readonly Extent Kongsberg = new Extent(9.61, 59.64, 9.70, 59.69); //Kongsberg, Norway
 
-        [SerializeField]
         private int zoomLevel = 13;
+
         [SerializeField]
         private GameObject placeholderTile;
 
@@ -40,6 +41,8 @@ namespace Terrain
         private string buildingsUrl = @"https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/tiles/{id}.b3dm";
         private const int tilesize = 180;
 
+        private TMP_Dropdown geocoder;
+
         //implement will use floating origin
         Vector2 floatingOrigin;
         const float UnityUnitsPerGraadX = 68600;
@@ -53,11 +56,30 @@ namespace Terrain
         [UsedImplicitly]
         private void Awake()
         {
-            //hack 
-            floatingOrigin = new Vector2((float) Amsterdam.CenterX, (float) Amsterdam.CenterY);
-            extent = Amsterdam;
+            var geocoderComponent = GetComponentUI("geocoder");
 
-            LoadMap();
+            if (geocoderComponent != null)
+            {
+                geocoder = geocoderComponent.GetComponent<TMP_Dropdown>();
+                GotoLocation(geocoder.value);
+            }
+            else
+            {
+                Debug.LogError("geocoder UI component not found");
+            }
+        }
+
+        public static GameObject GetComponentUI(string type)
+        {
+            var elements = GameObject.FindGameObjectsWithTag("UI-element");
+
+            foreach (var e in elements)
+            {
+                if (e.name.ToLower().Equals(type.ToLower()))
+                    return e;
+            }
+
+            return null; //not found
         }
 
         private void LoadMap()
@@ -283,9 +305,11 @@ namespace Terrain
             LoadMap();
         }
 
-        public void GotoLocation(string locationName)
+        public void GotoLocation(int locationIndex)
         {
-            switch (locationName)
+           var location = geocoder.options[locationIndex].text;
+
+            switch (location)
             {
                 case "Amsterdam":
                     extent = Amsterdam;
@@ -295,7 +319,7 @@ namespace Terrain
                     extent = Ispra;
                     floatingOrigin = new Vector2((float)Ispra.CenterX, (float)Ispra.CenterY);
                     break;
-                case "Kongsberg":                    
+                case "Kongsberg":
                     extent = Kongsberg;
                     floatingOrigin = new Vector2((float)Kongsberg.CenterX, (float)Kongsberg.CenterY);
                     break;

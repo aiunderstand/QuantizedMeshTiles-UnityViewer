@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Terrain;
+using TMPro;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
     Transform _target;
     public float Speed = 2;
+    public float PanSpeed = 0.5f;
+    Vector3 lastPosition;
+
     public GameObject[] anchors;
     public int _currentAnchorId = 0;
     bool isAnimating = false;
@@ -41,12 +46,100 @@ public class CameraController : MonoBehaviour
     /// </summary>
     private bool looking = false;
 
-    void Start()
+    
+    private bool allowRightMouseBtn = true;
+
+    enum ViewMode
     {
-        _target = anchors[0].transform;
+        _3D,
+        _2D
     }
 
-    public void AnimateTo(Transform target)
+    private ViewMode viewMode;
+    private TMP_Dropdown viewmodeDropdown;
+
+    enum ScrollwheelMode
+    {
+        Zoom,
+        StoryMap //use for next or previous slide (gameobject anchors) 
+    }
+
+    private ScrollwheelMode scrollwheelMode;
+    private TMP_Dropdown scrollwheelDropdown;
+
+
+    void Awake()
+    {
+        _target = anchors[0].transform;
+
+        InitUI();
+    }
+
+    private void InitUI()
+    {
+        var viewmodeComponent = MapViewer.GetComponentUI("View mode");
+
+        if (viewmodeComponent != null)
+        {
+            viewmodeDropdown = viewmodeComponent.GetComponent<TMP_Dropdown>();
+            UpdateViewMode(viewmodeDropdown.value);
+        }
+        else
+        {
+            Debug.LogError("view mode UI component not found");
+        }
+
+
+        var scrollwheelComponent = MapViewer.GetComponentUI("Scroll wheel");
+
+        if (scrollwheelComponent != null)
+        {
+            scrollwheelDropdown = scrollwheelComponent.GetComponent<TMP_Dropdown>();
+            scrollwheelMode = (ScrollwheelMode)Enum.Parse(typeof(ScrollwheelMode), scrollwheelDropdown.options[scrollwheelDropdown.value].text);
+        }
+        else
+        {
+            Debug.LogError("scroll wheel UI component not found");
+        }
+    }
+
+    public void UpdateViewMode(int index)
+    {
+        viewMode = (ViewMode)Enum.Parse(typeof(ViewMode), "_" + viewmodeDropdown.options[index].text);
+
+        switch (viewMode)
+        {
+            case ViewMode._2D:
+                //animate camera to top view and disable right mouse (free look)
+                allowRightMouseBtn = false;
+
+                //if camera height is below 1000 meter set to 1000 for 2D to have value;
+                if (_target.position.y < 1000)
+                    _target.position = new Vector3(_target.position.x, 1000, _target.position.z);
+
+                _target.rotation = Quaternion.Euler(new Vector3(90, _target.rotation.eulerAngles.y, _target.rotation.eulerAngles.z));
+                break;
+            case ViewMode._3D:
+                //animate camera to top view and disable right mouse (free look)
+                allowRightMouseBtn = true;
+
+                //if camera height is above 250 meter set to 250 for 3D to have value;
+                if (_target.position.y > 250)
+                    _target.position = new Vector3(_target.position.x, 250, _target.position.z);
+
+                _target.rotation = Quaternion.Euler(new Vector3(45, _target.rotation.eulerAngles.y, _target.rotation.eulerAngles.z));
+                break;
+        }
+
+        AnimateTo(_target);
+    }
+
+    public void UpdateZoomHandler(int index)
+    {
+        scrollwheelMode = (ScrollwheelMode)Enum.Parse(typeof(ScrollwheelMode), scrollwheelDropdown.options[index].text);
+    }
+
+    void AnimateTo(Transform target)
     {
         isAnimating = true;
         _target = target;
@@ -57,7 +150,19 @@ public class CameraController : MonoBehaviour
         Zoom(); //rotates between vantage points
 
         PanRotate();
-        
+
+        if (isAnimating)
+        {
+            transform.position = Vector3.Lerp(transform.position, _target.position, Time.deltaTime * Speed);
+            transform.rotation = Quaternion.Lerp(transform.rotation, _target.rotation, Time.deltaTime * Speed);
+
+            if (Vector3.Distance(transform.position, _target.position) < 10f)
+            {
+                isAnimating = false;
+                transform.position = _target.position;
+                transform.rotation = _target.rotation;
+            }
+        }
     }
 
     void OnDisable()
@@ -68,7 +173,7 @@ public class CameraController : MonoBehaviour
     /// <summary>
     /// Enable free looking.
     /// </summary>
-    public void StartLooking()
+    void StartLooking()
     {
         looking = true;
         Cursor.visible = false;
@@ -78,13 +183,13 @@ public class CameraController : MonoBehaviour
     /// <summary>
     /// Disable free looking.
     /// </summary>
-    public void StopLooking()
+    void StopLooking()
     {
         looking = false;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
-
+    
     private void PanRotate()
     {
         if (!isAnimating)
@@ -139,20 +244,25 @@ public class CameraController : MonoBehaviour
                 transform.localEulerAngles = new Vector3(newRotationY, newRotationX, 0f);
             }
 
-            //float axis = Input.GetAxis("Mouse ScrollWheel");
-            //if (axis != 0)
-            //{
-            //    var zoomSensitivity = fastMode ? this.fastZoomSensitivity : this.zoomSensitivity;
-            //    transform.position = transform.position + transform.forward * axis * zoomSensitivity;
-            //}
-
-            if (Input.GetKeyDown(KeyCode.Mouse1))
+            if (Input.GetKeyDown(KeyCode.Mouse1) && allowRightMouseBtn)
             {
                 StartLooking();
             }
-            else if (Input.GetKeyUp(KeyCode.Mouse1))
+            else if (Input.GetKeyUp(KeyCode.Mouse1) && allowRightMouseBtn)
             {
                 StopLooking();
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                lastPosition = Input.mousePosition;
+            }
+
+            if (Input.GetMouseButton(0))
+            {
+                var delta = Input.mousePosition - lastPosition;
+                transform.Translate(delta.x * PanSpeed, delta.y * PanSpeed, 0);
+                lastPosition = Input.mousePosition;
             }
         }
     }
@@ -160,38 +270,33 @@ public class CameraController : MonoBehaviour
     private void Zoom()
     {
         var d = Input.GetAxis("Mouse ScrollWheel");
-        if (d > 0f)
+
+        if (scrollwheelMode == ScrollwheelMode.Zoom)
         {
-            // scroll up
-            if (_currentAnchorId + 1 < anchors.Length)
-            {
-                _currentAnchorId++;
-                AnimateTo(anchors[_currentAnchorId].transform);
-            }
-        }
-        else if (d < 0f)
-        {
-            // scroll down
-            if (_currentAnchorId - 1 >= 0)
-            {
-                _currentAnchorId--;
-                AnimateTo(anchors[_currentAnchorId].transform);
-            }
+            var zoomSensitivity = 100;
+            transform.position = transform.position + transform.forward * d * zoomSensitivity;
         }
 
-        if (isAnimating)
+        if (scrollwheelMode == ScrollwheelMode.StoryMap)
         {
-            transform.position = Vector3.Lerp(transform.position, _target.position, Time.deltaTime * Speed);
-            transform.rotation = Quaternion.Lerp(transform.rotation, _target.rotation, Time.deltaTime * Speed);
-
-            if (Vector3.Distance(transform.position, _target.position) < 0.1f)
+            if (d > 0f) // scroll up
             {
-                isAnimating = false;
-                transform.position = _target.position;
-                transform.rotation = _target.rotation;
+                if (_currentAnchorId + 1 < anchors.Length)
+                {
+                    _currentAnchorId++;
+                    AnimateTo(anchors[_currentAnchorId].transform);
+                }
+            }
+            else if (d < 0f)   // scroll down
+            {
+
+                if (_currentAnchorId - 1 >= 0)
+                {
+                    _currentAnchorId--;
+                    AnimateTo(anchors[_currentAnchorId].transform);
+                }
             }
         }
-
-        
     }
 }
+
