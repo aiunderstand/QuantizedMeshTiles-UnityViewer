@@ -34,7 +34,7 @@ public class CameraController : MonoBehaviour
     /// <summary>
     /// Amount to zoom the camera when using the mouse wheel.
     /// </summary>
-    public float zoomSensitivity = 10f;
+    public float zoomSensitivity = 500f;
 
     /// <summary>
     /// Amount to zoom the camera when using the mouse wheel (fast mode).
@@ -156,7 +156,7 @@ public class CameraController : MonoBehaviour
             transform.position = Vector3.Lerp(transform.position, _target.position, Time.deltaTime * Speed);
             transform.rotation = Quaternion.Lerp(transform.rotation, _target.rotation, Time.deltaTime * Speed);
 
-            if (Vector3.Distance(transform.position, _target.position) < 10f)
+            if (Vector3.Distance(transform.position, _target.position) < 1f)
             {
                 isAnimating = false;
                 transform.position = _target.position;
@@ -273,7 +273,6 @@ public class CameraController : MonoBehaviour
 
         if (scrollwheelMode == ScrollwheelMode.Zoom)
         {
-            var zoomSensitivity = 100;
             transform.position = transform.position + transform.forward * d * zoomSensitivity;
         }
 

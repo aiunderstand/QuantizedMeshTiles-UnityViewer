@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Terrain;
+using UnityEngine;
 
 namespace Assets.Scripts
 {
@@ -6,13 +7,13 @@ namespace Assets.Scripts
     {
 
         public string Url;
-        public TileServiceType Service;
+        public DataType Datatype;
         public Vector3 TileId;
-
-        public DownloadRequest(string url, TileServiceType service, Vector3 tileId)
+        
+        public DownloadRequest(string url, DataType datatype, Vector3 tileId)
         {
             Url = url;
-            Service = service;
+            Datatype = datatype;
             TileId = tileId;
         }
     }
