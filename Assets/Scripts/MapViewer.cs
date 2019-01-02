@@ -17,6 +17,7 @@ using B3dm.Tile;
 using GLTF.Schema;
 using GLTF;
 using UnityGLTF;
+using Pnts.Tile;
 
 namespace Terrain
 {
@@ -98,17 +99,17 @@ namespace Terrain
                 Debug.LogError("buildings UI component not found");
             }
 
-            //comp = GetComponentUI("Trees");
+            comp = GetComponentUI("Trees");
 
-            //if (comp != null)
-            //{
-            //    treesDropdown = comp.GetComponent<TMP_Dropdown>();
-            //    SetTreesProvider(treesDropdown.value);
-            //}
-            //else
-            //{
-            //    Debug.LogError("trees UI component not found");
-            //}
+            if (comp != null)
+            {
+                treesDropdown = comp.GetComponent<TMP_Dropdown>();
+                SetTreesProvider(treesDropdown.value);
+            }
+            else
+            {
+                Debug.LogError("trees UI component not found");
+            }
 
             comp = GetComponentUI("geocoder");
 
@@ -122,6 +123,124 @@ namespace Terrain
                 Debug.LogError("geocoder UI component not found");
             }
         }
+
+        public void SetTreesProvider(int value)
+        {
+            var treesName = treesDropdown.options[value].text;
+
+            foreach (var ds in settings.DataSources)
+            {
+                if (ds.DataType == DataType.Trees)
+                {
+                    if (ds.Name.Equals(treesName))
+                    {
+                        trees = ds;
+                    }
+                }
+            }
+
+            StartCoroutine(LoadTrees(trees.Url));
+        }
+
+        private IEnumerator LoadTrees(string url)
+        {
+            DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
+            var www = new UnityWebRequest(url)
+            {
+                downloadHandler = handler
+            };
+            yield return www.SendWebRequest();
+
+            if (!www.isNetworkError && !www.isHttpError)
+            {
+                //get data
+                string jsonString = www.downloadHandler.text;
+
+                //convert to jsonTree
+                var json = JsonConvert.DeserializeObject<b3dm_pnts.Rootobject>(jsonString);
+
+                //collect all url nodes in jsonTree and add to list
+                List<string> tiles = new List<string>();
+           
+                if (json.root.content != null)
+                    tiles.Add(json.root.content.url);
+            
+                foreach (var c in json.root.children)
+                {
+                    tiles.Add(c.content.url);
+
+                    if (c.children !=null)
+                        AddToTiles(c.children, tiles);
+                }
+
+                //download and load tiles
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    downloadQueue.Enqueue(new DownloadRequest(tiles[i], DataType.Trees, Vector3.zero));
+                }
+
+            }
+            else
+            {
+                Debug.Log("Tile: [" + url + "] Error loading tileset data");
+            }
+        }
+
+        private IEnumerator RequestTreeTile(string url)
+        {
+            DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
+            var www = new UnityWebRequest(@"https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_121000-487000/" + url)
+            {
+                downloadHandler = handler
+            };
+            yield return www.SendWebRequest();
+
+            if (!www.isNetworkError && !www.isHttpError)
+            {
+                //get data
+                var stream = new MemoryStream(www.downloadHandler.data);
+
+                var pnts = PntsParser.ParsePnts(stream);
+                var pointData = pnts.Points;
+                var colorData = pnts.Colors;
+
+                Vector3[] verts = new Vector3[pointData.Count];
+                for (int i = 0; i < pointData.Count; i++)
+                {
+                    verts[i] = new Vector3(pointData[i].X, pointData[i].Y, pointData[i].Z);
+                }
+
+                Color[] colors = new Color[colorData.Count];
+                for (int i = 0; i < colorData.Count; i++)
+                {
+                    colors[i] = new Color(colorData[i].R, colorData[i].G, colorData[i].B, colorData[i].A);
+                }
+
+                int[] tris = new int[pointData.Count];
+
+                for (int i = 0; i < tris.Length; i++)
+                {
+                    tris[i] = i;
+                }
+
+                Mesh m = new Mesh();
+                m.vertices = verts;
+                m.colors = colors;
+                m.SetIndices(tris, MeshTopology.Points, 0);
+                m.RecalculateBounds();
+                
+                GameObject trees = new GameObject("trees: " + url);
+                trees.AddComponent<MeshRenderer>().material = new Material(Shader.Find("Point Cloud/Point"));
+                trees.AddComponent<MeshFilter>().mesh = m;
+            }
+            else
+            {
+                Debug.Log("Tile: [" + url + "] Error loading b3dm data");
+            }
+
+            pendingQueue.Remove(url);
+        }
+
 
         public void SetBuildingsProvider(int value)
         {
@@ -165,7 +284,7 @@ namespace Terrain
                 {
                     tiles.Add(c.content.url);
 
-                    if (c.children.Length > 0)
+                    if (c.children != null)
                         AddToTiles(c.children, tiles);
                 }
 
@@ -182,13 +301,25 @@ namespace Terrain
             }
         }
         
-        private void AddToTiles(Child[] children, List<string> tiles)
+        private void AddToTiles(b3dm.Child[] children, List<string> tiles)
         {
             foreach (var c in children)
             {
                 tiles.Add(c.content.url);
 
-                if (c.children.Length > 0)
+                if (c.children != null)
+                    AddToTiles(c.children, tiles);
+            }
+
+        }
+
+        private void AddToTiles(b3dm_pnts.Child[] children, List<string> tiles)
+        {
+            foreach (var c in children)
+            {
+                tiles.Add(c.content.url);
+
+                if (c.children != null)
                     AddToTiles(c.children, tiles);
             }
 
@@ -450,6 +581,9 @@ namespace Terrain
                         break;
                     case DataType.Buildings:
                         StartCoroutine(RequestBuildingTile(request.Url));
+                        break;
+                    case DataType.Trees:
+                        StartCoroutine(RequestTreeTile(request.Url));
                         break;
                 }
             }
