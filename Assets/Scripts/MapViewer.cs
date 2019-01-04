@@ -92,7 +92,7 @@ namespace Terrain
             if (comp != null)
             {
                 buildingsDropdown = comp.GetComponent<TMP_Dropdown>();
-                SetBuildingsProvider(buildingsDropdown.value);
+                //SetBuildingsProvider(buildingsDropdown.value);
             }
             else
             {
@@ -213,7 +213,8 @@ namespace Terrain
                 Color[] colors = new Color[colorData.Count];
                 for (int i = 0; i < colorData.Count; i++)
                 {
-                    colors[i] = new Color(colorData[i].R, colorData[i].G, colorData[i].B, colorData[i].A);
+                    colors[i] = new Color(colorData[i].R/ (float) 255f, colorData[i].G/ (float) 255f, colorData[i].B/ (float)255f, colorData[i].A/ (float)255f);
+                    
                 }
 
                 int[] tris = new int[pointData.Count];
