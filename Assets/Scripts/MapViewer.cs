@@ -373,7 +373,7 @@ namespace Terrain
                 //get data
                 var stream = new MemoryStream(www.downloadHandler.data);
 
-                var b3dm = B3dmParser.ParseB3dm(stream, true); //set to false because currently no batchtable is supplied in adam datasources. When adding eg. BagID's, this needs to be set to true + plus batchtable implementation.
+                var b3dm = B3dmParser.ParseB3dm(stream); //set to false because currently no batchtable is supplied in adam datasources. When adding eg. BagID's, this needs to be set to true + plus batchtable implementation.
                 //Debug.Log(b3dm.Glb.GltfModelJson);
                 var memoryStream = new MemoryStream(b3dm.GlbData);
                 Load(memoryStream, offset);
