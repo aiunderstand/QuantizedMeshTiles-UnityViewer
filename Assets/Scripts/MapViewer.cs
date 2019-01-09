@@ -12,12 +12,13 @@ using JetBrains.Annotations;
 using Assets.Scripts;
 using TMPro;
 using Newtonsoft.Json;
-using b3dm;
 using B3dm.Tile;
 using GLTF.Schema;
 using GLTF;
 using UnityGLTF;
 using Pnts.Tile;
+using DotSpatial.Projections;
+using DotSpatial.Positioning;
 
 namespace Terrain
 {
@@ -92,7 +93,7 @@ namespace Terrain
             if (comp != null)
             {
                 buildingsDropdown = comp.GetComponent<TMP_Dropdown>();
-                //SetBuildingsProvider(buildingsDropdown.value);
+                SetBuildingsProvider(buildingsDropdown.value);
             }
             else
             {
@@ -145,7 +146,7 @@ namespace Terrain
         private IEnumerator LoadTrees(string url)
         {
             DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
-            var www = new UnityWebRequest(url)
+            var www = new UnityWebRequest(url + "tileset.json")
             {
                 downloadHandler = handler
             };
@@ -163,14 +164,14 @@ namespace Terrain
                 List<string> tiles = new List<string>();
            
                 if (json.root.content != null)
-                    tiles.Add(json.root.content.url);
+                    tiles.Add(url + json.root.content.url);
             
                 foreach (var c in json.root.children)
                 {
-                    tiles.Add(c.content.url);
+                    tiles.Add(url + c.content.url);
 
                     if (c.children !=null)
-                        AddToTiles(c.children, tiles);
+                        AddToTiles(c.children, tiles, url);
                 }
 
                 //download and load tiles
@@ -189,7 +190,7 @@ namespace Terrain
         private IEnumerator RequestTreeTile(string url)
         {
             DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
-            var www = new UnityWebRequest(@"https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_121000-487000/" + url)
+            var www = new UnityWebRequest(url)
             {
                 downloadHandler = handler
             };
@@ -203,13 +204,28 @@ namespace Terrain
                 var pnts = PntsParser.ParsePnts(stream);
                 var pointData = pnts.Points;
                 var colorData = pnts.Colors;
-
+                
                 Vector3[] verts = new Vector3[pointData.Count];
                 for (int i = 0; i < pointData.Count; i++)
                 {
-                    verts[i] = new Vector3(pointData[i].X, pointData[i].Y, pointData[i].Z);
+                    var dist_x = new Distance(pnts.FeatureTableMetadata.Rtc_Center[0] + pointData[i].X, DistanceUnit.Meters); //lon
+                    var dist_y = new Distance(pnts.FeatureTableMetadata.Rtc_Center[1] + pointData[i].Y, DistanceUnit.Meters); //lat
+                    var dist_z = new Distance(pnts.FeatureTableMetadata.Rtc_Center[2] + pointData[i].Z, DistanceUnit.Meters); //alt
+
+                    var WGS84Coor = new CartesianPoint(dist_x, dist_y, dist_z).ToPosition3D();
+
+                    double x = WGS84Coor.Longitude.DecimalDegrees;
+                    double height = WGS84Coor.Altitude.Value;
+                    double z = WGS84Coor.Latitude.DecimalDegrees;
+
+                    //conversion to view
+                    var xv = (x - floatingOrigin.x) * UnityUnitsPerGraadX;
+                    var zv = (z - floatingOrigin.y) * UnityUnitsPerGraadY;
+                   
+                    verts[i] = new Vector3((float) xv, (float) height, (float) zv);
                 }
 
+                
                 Color[] colors = new Color[colorData.Count];
                 for (int i = 0; i < colorData.Count; i++)
                 {
@@ -264,7 +280,7 @@ namespace Terrain
         private IEnumerator LoadBuildings(string url)
         {
             DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
-            var www = new UnityWebRequest(url)
+            var www = new UnityWebRequest(url + "tileset.json")
             {
                 downloadHandler = handler
             };
@@ -283,16 +299,33 @@ namespace Terrain
 
                 foreach (var c in json.root.children)
                 {
-                    tiles.Add(c.content.url);
+                    tiles.Add(url + c.content.url);
 
                     if (c.children != null)
-                        AddToTiles(c.children, tiles);
+                        AddToTiles(c.children, tiles, url);
                 }
+           
+                //get translation offset
+                var dist_x = new Distance(json.root.transform[12], DistanceUnit.Meters); //lon
+                var dist_y = new Distance(json.root.transform[13], DistanceUnit.Meters); //lat
+                var dist_z = new Distance(json.root.transform[14], DistanceUnit.Meters); //alt
+
+                var WGS84Coor = new CartesianPoint(dist_x, dist_y, dist_z).ToPosition3D();
+
+                double x = WGS84Coor.Longitude.DecimalDegrees;
+                double height = WGS84Coor.Altitude.Value;
+                double z = WGS84Coor.Latitude.DecimalDegrees;
+
+                //conversion to view
+                var xv = (x - floatingOrigin.x) * UnityUnitsPerGraadX;
+                var zv = (z - floatingOrigin.y) * UnityUnitsPerGraadY;
+
+                var offset = new Vector3((float)xv, (float)height, (float)zv);
 
                 //download and load tiles
                 for (int i = 0; i < tiles.Count; i++)
                 {
-                    downloadQueue.Enqueue(new DownloadRequest(tiles[i], DataType.Buildings, Vector3.zero));
+                    downloadQueue.Enqueue(new DownloadRequest(tiles[i], DataType.Buildings, offset));
                 }
                
             }
@@ -302,34 +335,34 @@ namespace Terrain
             }
         }
         
-        private void AddToTiles(b3dm.Child[] children, List<string> tiles)
+        private void AddToTiles(b3dm.Child[] children, List<string> tiles, string url)
         {
             foreach (var c in children)
             {
-                tiles.Add(c.content.url);
+                tiles.Add(url + c.content.url);
 
                 if (c.children != null)
-                    AddToTiles(c.children, tiles);
+                    AddToTiles(c.children, tiles, url);
             }
 
         }
 
-        private void AddToTiles(b3dm_pnts.Child[] children, List<string> tiles)
+        private void AddToTiles(b3dm_pnts.Child[] children, List<string> tiles, string url)
         {
             foreach (var c in children)
             {
-                tiles.Add(c.content.url);
+                tiles.Add(url + c.content.url);
 
                 if (c.children != null)
-                    AddToTiles(c.children, tiles);
+                    AddToTiles(c.children, tiles, url);
             }
 
         }
 
-        private IEnumerator RequestBuildingTile(string url)
+        private IEnumerator RequestBuildingTile(string url, Vector3 offset)
         {
             DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
-            var www = new UnityWebRequest(@"https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/" + url)
+            var www = new UnityWebRequest(url)
             {
                 downloadHandler = handler
             };
@@ -340,10 +373,10 @@ namespace Terrain
                 //get data
                 var stream = new MemoryStream(www.downloadHandler.data);
 
-                var b3dm = B3dmParser.ParseB3dm(stream);
-
+                var b3dm = B3dmParser.ParseB3dm(stream, true); //set to false because currently no batchtable is supplied in adam datasources. When adding eg. BagID's, this needs to be set to true + plus batchtable implementation.
+                //Debug.Log(b3dm.Glb.GltfModelJson);
                 var memoryStream = new MemoryStream(b3dm.GlbData);
-                Load(memoryStream);
+                Load(memoryStream, offset);
             }
             else
             {
@@ -353,11 +386,12 @@ namespace Terrain
             pendingQueue.Remove(url);
         }
 
-        private void Load(Stream stream)
+        private void Load(Stream stream, Vector3 offset)
         {
             GLTFRoot gLTFRoot;
             GLTFParser.ParseJson(stream, out gLTFRoot);
             var loader = new GLTFSceneImporter(gLTFRoot, null, null, stream);
+            loader.Offset = offset;
             loader.LoadSceneAsync();
         }
 
@@ -522,7 +556,7 @@ namespace Terrain
                 terrainTile = TerrainTileParser.Parse(stream);
 
                 //update tile with height data
-                tileDb[tileId].GetComponent<MeshFilter>().sharedMesh = terrainTile.GetMesh(-44); //height offset is manually done to nicely align height data with place holder at 0
+                tileDb[tileId].GetComponent<MeshFilter>().sharedMesh = terrainTile.GetMesh();
                 tileDb[tileId].transform.localScale = new Vector3(ComputeScaleFactorX((int)tileId.z), 1, ComputeScaleFactorY((int)tileId.z));
             }
             else
@@ -581,7 +615,7 @@ namespace Terrain
                         StartCoroutine(RequestSurfaceTile(request.Url, request.TileId));
                         break;
                     case DataType.Buildings:
-                        StartCoroutine(RequestBuildingTile(request.Url));
+                        StartCoroutine(RequestBuildingTile(request.Url, request.TileId)); //hack tileid is now offset, add datatype 
                         break;
                     case DataType.Trees:
                         StartCoroutine(RequestTreeTile(request.Url));

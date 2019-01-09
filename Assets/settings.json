@@ -1,141 +1,178 @@
 {
-    "DataSources": [
-        {
-            "Name": "AHN3 (NL)",
-            "DataType": "Terrain",
-            "Service": "QM",
-            "Url": "https://saturnus.geodan.nl/tomt/data/tiles/{z}/{x}/{y}.terrain?v=1.0.0",
-            "EPSG": "4326",
-            "WGS84Bounds": {
-                "minLon": "-180",
-                "minLat": "180",
-                "maxLon": "-90",
-                "maxLat": "90"
-            },
-            "minZoom": "15",
-            "maxZoom": "17"
-        },
-        {
-            "Name": "AGI (World)",
-            "DataType": "Terrain",
-            "Service": "QM",
-            "Url": "https://maps.tilehosting.com/data/terrain-quantized-mesh/{z}/{x}/{y}.terrain?key=irAs6FzTF3gJ9ArfQPjh",
-            "EPSG": "4326",
-            "WGS84Bounds": {
-                "minLon": "-180",
-                "minLat": "180",
-                "maxLon": "-90",
-                "maxLat": "90"
-            },
-            "minZoom": "0",
-            "maxZoom": "13"
-        },
-        {
-            "Name": "Ahocevar (World)",
-            "DataType": "Surface",
-            "Service": "WMS",
-            "Url": "https://ahocevar.com/geoserver/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=ne%3ANE1_HR_LC_SR_W_DR&TILED=true&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&STYLES=&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}",
-            "EPSG": "4326",
-            "WGS84Bounds": {
-                "minLon": "-180",
-                "minLat": "180",
-                "maxLon": "-90",
-                "maxLat": "90"
-            },
-            "minZoom": "0",
-            "maxZoom": "10"
-        },
-        {
-            "Name": "BGT (NL)",
-            "DataType": "Surface",
-            "Service": "WMS",
-            "Url": "https://saturnus.geodan.nl/mapproxy/bgt/service?service=WMS&version=1.1.1&request=GetMap&styles=&format=image%2Fjpeg&layers=bgt&bbox={xMin}%2C{yMin}%2C{xMax}%2C{yMax}&width=256&height=256&srs=EPSG%3A4326",
-            "EPSG": "4326",
-            "WGS84Bounds": {
-                "minLon": "-180",
-                "minLat": "180",
-                "maxLon": "-90",
-                "maxLat": "90"
-            },
-            "minZoom": "15",
-            "maxZoom": "17"
-        },
-        {
-            "Name": "Satellite (NL)",
-            "DataType": "Surface",
-            "Service": "WMS",
-            "Url": "https://geodata.nationaalgeoregister.nl/luchtfoto/rgb/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=2016_ortho25&STYLES&CRS=EPSG%3A4326&WIDTH=256&HEIGHT=256&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}",
-            "EPSG": "4326",
-            "WGS84Bounds": {
-                "minLon": "-180",
-                "minLat": "180",
-                "maxLon": "-90",
-                "maxLat": "90"
-            },
-            "minZoom": "0",
-            "maxZoom": "17"
-        },
-        {
-            "Name": "BAG LoD 1 (NL)",
-            "DataType": "Buildings",
-            "Service": "B3DM_3DTILE",
-            "Url": "https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/tileset.json",
-            "EPSG": "4326",
-            "WGS84Bounds": {
-                "minLon": "-180",
-                "minLat": "180",
-                "maxLon": "-90",
-                "maxLat": "90"
-            },
-            "minZoom": "0",
-            "maxZoom": "13"
-        },
-        {
-            "Name": "AHN3 Trees (NL)",
-            "DataType": "Trees",
-            "Service": "PNTS_3DTILE",
-            "Url": "https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_121000-487000/tileset.json",
-            "EPSG": "4326",
-            "WGS84Bounds": {
-                "minLon": "-180",
-                "minLat": "180",
-                "maxLon": "-90",
-                "maxLat": "90"
-            },
-            "minZoom": "0",
-            "maxZoom": "17"
-        }
-    ],
+  "DataSources": [
+    {
+      "Name": "AHN3 (NL)",
+      "DataType": "Terrain",
+      "Service": "QM",
+      "Url": "https://saturnus.geodan.nl/tomt/data/tiles/{z}/{x}/{y}.terrain?v=1.0.0",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "15",
+      "maxZoom": "17"
+    },
+    {
+      "Name": "AGI (World)",
+      "DataType": "Terrain",
+      "Service": "QM",
+      "Url": "https://maps.tilehosting.com/data/terrain-quantized-mesh/{z}/{x}/{y}.terrain?key=irAs6FzTF3gJ9ArfQPjh",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "0",
+      "maxZoom": "13"
+    },
+    {
+      "Name": "Ahocevar (World)",
+      "DataType": "Surface",
+      "Service": "WMS",
+      "Url": "https://ahocevar.com/geoserver/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=ne%3ANE1_HR_LC_SR_W_DR&TILED=true&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&STYLES=&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "0",
+      "maxZoom": "10"
+    },
+    {
+      "Name": "BGT (NL)",
+      "DataType": "Surface",
+      "Service": "WMS",
+      "Url": "https://saturnus.geodan.nl/mapproxy/bgt/service?service=WMS&version=1.1.1&request=GetMap&styles=&format=image%2Fjpeg&layers=bgt&bbox={xMin}%2C{yMin}%2C{xMax}%2C{yMax}&width=256&height=256&srs=EPSG%3A4326",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "15",
+      "maxZoom": "17"
+    },
+    {
+      "Name": "Satellite (NL)",
+      "DataType": "Surface",
+      "Service": "WMS",
+      "Url": "https://geodata.nationaalgeoregister.nl/luchtfoto/rgb/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=2016_ortho25&STYLES&CRS=EPSG%3A4326&WIDTH=256&HEIGHT=256&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "0",
+      "maxZoom": "17"
+    },
+    {
+      "Name": "BAG LoD 1 (NL)",
+      "DataType": "Buildings",
+      "Service": "B3DM_3DTILE",
+      "Url": "https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "0",
+      "maxZoom": "17"
+    },
+    {
+      "Name": "BAG LoD 2 (NL)",
+      "DataType": "Buildings",
+      "Service": "B3DM_3DTILE",
+      "Url": "https://saturnus.geodan.nl/tomt/data/buildingtiles_texel/",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "0",
+      "maxZoom": "17"
+    },
+    {
+      "Name": "AHN3 Trees (NL)",
+      "DataType": "Trees",
+      "Service": "PNTS_3DTILE",
+      "Url": "https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_121000-487000/",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "0",
+      "maxZoom": "17"
+    },
+    {
+      "Name": "AHN3 Trees Texel(NL)",
+      "DataType": "Trees",
+      "Service": "PNTS_3DTILE",
+      "Url": "https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_119000-568000/",
+      "EPSG": "4326",
+      "WGS84Bounds": {
+        "minLon": "-180",
+        "minLat": "180",
+        "maxLon": "-90",
+        "maxLat": "90"
+      },
+      "minZoom": "0",
+      "maxZoom": "17"
+    }
+
+  ],
   "Locations": [
     {
       "Name": "Amsterdam",
-      "WGS84Bounds": 
-        {
-          "minLon": "4.88",
-          "minLat": "52.36",
-          "maxLon": "4.92",
-          "maxLat": "52.38"
-        }      
+      "WGS84Bounds": {
+        "minLon": "4.88",
+        "minLat": "52.36",
+        "maxLon": "4.92",
+        "maxLat": "52.38"
+      }
     },
     {
       "Name": "Ispra",
-      "WGS84Bounds": 
-        {
-          "minLon": "8.57",
-          "minLat": "45.78",
-          "maxLon": "8.67",
-          "maxLat": "45.85"
-        }      
+      "WGS84Bounds": {
+        "minLon": "8.57",
+        "minLat": "45.78",
+        "maxLon": "8.67",
+        "maxLat": "45.85"
+      }
     },
     {
       "Name": "Kongsberg",
-      "WGS84Bounds": 
-        {
-          "minLon": "9.61",
-          "minLat": "59.64",
-          "maxLon": "9.70",
-          "maxLat": "59.69"
-        }      
+      "WGS84Bounds": {
+        "minLon": "9.61",
+        "minLat": "59.64",
+        "maxLon": "9.70",
+        "maxLat": "59.69"
+      }
+    },
+    {
+      "Name": "Texel",
+      "WGS84Bounds": {
+        "minLon": "4.78",
+        "minLat": "53.02",
+        "maxLon": "4.87",
+        "maxLat": "53.06"
+      }
     }
   ]
 }

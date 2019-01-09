@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Assets;
+using UnityEngine;
 using UnityGLTF.Cache;
 
 namespace UnityGLTF
@@ -8,6 +9,9 @@ namespace UnityGLTF
     /// </summary>
     public class InstantiatedGLTFObject : MonoBehaviour
     {
+        bool drawEdges = false;
+        bool drawVertexColors = false;
+
         /// <summary>
         /// Ref-counted cache data for this object.
         /// The same instance of this cached data will be used for all copies of this GLTF object,
@@ -61,6 +65,33 @@ namespace UnityGLTF
         private void OnDestroy()
         {
             CachedData = null;
+        }
+
+        private void Start()
+        {
+            if (drawVertexColors)
+            {
+                var batchIds = CachedData.MeshCache[0][0].MeshAttributes["_BATCHID"].AccessorContent.AsUInts;
+
+                Color[] colors = new Color[batchIds.Length];
+                for (int i = 0; i < batchIds.Length; i++)
+                {
+                    colors[i] = ColorLookupTable.colors[(int)batchIds[i]];
+                }
+
+                var m = GetComponentInChildren<MeshFilter>().sharedMesh;
+                m.colors = colors;
+
+                var renderer = GetComponentInChildren<MeshRenderer>().sharedMaterial = new Material(Shader.Find("Custom/StandardShaderWithVertexColor"));
+            }
+
+            if (drawEdges)
+                GetComponentInChildren<MeshFilter>().gameObject.AddComponent<Wireframe>();
+        }
+
+        private void OnMouseDown()
+        {
+           
         }
     }
 }
