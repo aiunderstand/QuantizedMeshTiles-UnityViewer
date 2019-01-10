@@ -11,7 +11,7 @@ namespace UnityGLTF
     {
         bool drawEdges = false;
         bool drawVertexColors = false;
-
+        bool replaceWithStandard = true;
         /// <summary>
         /// Ref-counted cache data for this object.
         /// The same instance of this cached data will be used for all copies of this GLTF object,
@@ -87,6 +87,11 @@ namespace UnityGLTF
 
             if (drawEdges)
                 GetComponentInChildren<MeshFilter>().gameObject.AddComponent<Wireframe>();
+
+            if (replaceWithStandard)
+            {
+                var renderer = GetComponentInChildren<MeshRenderer>().sharedMaterial = new Material(Shader.Find("Standard"));
+            }
         }
 
         private void OnMouseDown()

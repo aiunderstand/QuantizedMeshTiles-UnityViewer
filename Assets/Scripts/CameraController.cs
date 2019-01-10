@@ -123,9 +123,9 @@ public class CameraController : MonoBehaviour
                 //animate camera to top view and disable right mouse (free look)
                 allowRightMouseBtn = true;
 
-                //if camera height is above 250 meter set to 250 for 3D to have value;
-                if (_target.position.y > 250)
-                    _target.position = new Vector3(_target.position.x, 250, _target.position.z);
+                //if camera height is above 1000 meter set to 1000 for 3D to have value;
+                if (_target.position.y > 1000)
+                    _target.position = new Vector3(_target.position.x, 1000, _target.position.z);
 
                 _target.rotation = Quaternion.Euler(new Vector3(45, _target.rotation.eulerAngles.y, _target.rotation.eulerAngles.z));
                 break;

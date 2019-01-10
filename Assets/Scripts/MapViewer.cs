@@ -53,6 +53,7 @@ namespace Terrain
         readonly Queue<DownloadRequest> downloadQueue = new Queue<DownloadRequest>();
         readonly Dictionary<string, DownloadRequest> pendingQueue = new Dictionary<string, DownloadRequest>(maxParallelRequests);
         Settings settings;
+        int maxDepthLevel = 0; //increase to allow more pointcloud detail (zoom levels)
 
         [UsedImplicitly]
         private void Awake()
@@ -60,6 +61,8 @@ namespace Terrain
             settings = LoadSettingsFromDisk();
 
             InitSettings();
+
+            LoadMap();
         }
 
         private void InitSettings()
@@ -140,12 +143,16 @@ namespace Terrain
                 }
             }
 
-            StartCoroutine(LoadTrees(trees.Url));
+            foreach (var treeTile in trees.Collection)
+            {
+                downloadQueue.Enqueue(new DownloadRequest(trees.Url[0] + treeTile + "/", DataType.TreeCollection, Vector3.zero));
+            }
         }
 
-        private IEnumerator LoadTrees(string url)
+        private IEnumerator RequestTreeCollection(string url)
         {
             DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
+
             var www = new UnityWebRequest(url + "tileset.json")
             {
                 downloadHandler = handler
@@ -162,18 +169,31 @@ namespace Terrain
 
                 //collect all url nodes in jsonTree and add to list
                 List<string> tiles = new List<string>();
-           
-                if (json.root.content != null)
+
+               if (json.root.content != null)
                     tiles.Add(url + json.root.content.url);
-            
-                foreach (var c in json.root.children)
+
+                //hackish lod system
+                int depthLevel = 2; // tileset 1/x/x/x;
+                if (depthLevel <= maxDepthLevel)
                 {
-                    tiles.Add(url + c.content.url);
+                    if (json.root.children != null)
+                    {
+                        foreach (var c in json.root.children)
+                        {
+                            tiles.Add(url + c.content.url);
 
-                    if (c.children !=null)
-                        AddToTiles(c.children, tiles, url);
+                            depthLevel++; // tileset 2/x/x/x;
+                            if (depthLevel <= maxDepthLevel)
+                            {
+                                if (c.children != null)
+                                {
+                                    AddToTiles(c.children, tiles, url, depthLevel);
+                                }
+                            }
+                        }
+                    }
                 }
-
                 //download and load tiles
                 for (int i = 0; i < tiles.Count; i++)
                 {
@@ -185,6 +205,8 @@ namespace Terrain
             {
                 Debug.Log("Tile: [" + url + "] Error loading tileset data");
             }
+
+            pendingQueue.Remove(url);
         }
 
         private IEnumerator RequestTreeTile(string url)
@@ -245,8 +267,8 @@ namespace Terrain
                 m.colors = colors;
                 m.SetIndices(tris, MeshTopology.Points, 0);
                 m.RecalculateBounds();
-                
-                GameObject trees = new GameObject("trees: " + url);
+
+                GameObject trees = new GameObject("trees: " + url);// { hideFlags = HideFlags.HideInHierarchy };
                 trees.AddComponent<MeshRenderer>().material = new Material(Shader.Find("Point Cloud/Point"));
                 trees.AddComponent<MeshFilter>().mesh = m;
             }
@@ -257,8 +279,7 @@ namespace Terrain
 
             pendingQueue.Remove(url);
         }
-
-
+        
         public void SetBuildingsProvider(int value)
         {
             var buildingsName = buildingsDropdown.options[value].text;
@@ -274,10 +295,13 @@ namespace Terrain
                 }
             }
 
-            StartCoroutine(LoadBuildings(buildings.Url));
+            foreach (var buildingTile in buildings.Url)
+            {
+                downloadQueue.Enqueue(new DownloadRequest(buildingTile, DataType.BuildingRootTile, Vector3.zero));
+            }
         }
 
-        private IEnumerator LoadBuildings(string url)
+        private IEnumerator RequestBuildingRootTile(string url)
         {
             DownloadHandlerBuffer handler = new DownloadHandlerBuffer();
             var www = new UnityWebRequest(url + "tileset.json")
@@ -347,14 +371,18 @@ namespace Terrain
 
         }
 
-        private void AddToTiles(b3dm_pnts.Child[] children, List<string> tiles, string url)
+        private void AddToTiles(b3dm_pnts.Child[] children, List<string> tiles, string url, int depthLevel)
         {
             foreach (var c in children)
             {
                 tiles.Add(url + c.content.url);
 
-                if (c.children != null)
-                    AddToTiles(c.children, tiles, url);
+                depthLevel++;
+                if (depthLevel <= maxDepthLevel)
+                {
+                    if (c.children != null)
+                        AddToTiles(c.children, tiles, url, depthLevel);
+                }
             }
 
         }
@@ -456,7 +484,7 @@ namespace Terrain
 
         private void LoadMap()
         {
-            ClearCache();
+            ClearBuildingCache();
 
             var schema = new TmsGlobalGeodeticTileSchema();
             var tileRange = TileTransform.WorldToTile(extent, zoomLevel.ToString(), schema);
@@ -494,10 +522,12 @@ namespace Terrain
                 {
                     case DataService.WMS:
                         var subtileExtent = TileTransform.TileToWorld(new TileRange(t.Index.Col, t.Index.Row), t.Index.Level.ToString(), schema);
-                        surfaceUrl = surface.Url.Replace("{xMin}", subtileExtent.MinX.ToString()).Replace("{yMin}", subtileExtent.MinY.ToString()).Replace("{xMax}", subtileExtent.MaxX.ToString()).Replace("{yMax}", subtileExtent.MaxY.ToString()).Replace(",", ".");
+                        var urlWMS = surface.Url[0];
+                        surfaceUrl = urlWMS.Replace("{xMin}", subtileExtent.MinX.ToString()).Replace("{yMin}", subtileExtent.MinY.ToString()).Replace("{xMax}", subtileExtent.MaxX.ToString()).Replace("{yMax}", subtileExtent.MaxY.ToString()).Replace(",", ".");
                         break;
                     case DataService.TMS:
-                        surfaceUrl = surface.Url.Replace("{x}", t.Index.Col.ToString()).Replace("{y}", t.Index.Row.ToString()).Replace("{z}", int.Parse(t.Index.Level).ToString());
+                        var urlTMS = surface.Url[0];
+                        surfaceUrl = urlTMS.Replace("{x}", t.Index.Col.ToString()).Replace("{y}", t.Index.Row.ToString()).Replace("{z}", int.Parse(t.Index.Level).ToString());
                         break;
                 }
 
@@ -505,7 +535,7 @@ namespace Terrain
                 
 
                 //get tile height data (
-                var terrainUrl = terrain.Url.Replace("{x}", t.Index.Col.ToString()).Replace("{y}", t.Index.Row.ToString()).Replace("{z}", int.Parse(t.Index.Level).ToString());
+                var terrainUrl = terrain.Url[0].Replace("{x}", t.Index.Col.ToString()).Replace("{y}", t.Index.Row.ToString()).Replace("{z}", int.Parse(t.Index.Level).ToString());
                 downloadQueue.Enqueue(new DownloadRequest(terrainUrl, DataType.Terrain, new Vector3(t.Index.Col, t.Index.Row, int.Parse(t.Index.Level))));
             }
         }
@@ -519,12 +549,10 @@ namespace Terrain
             return tile;
         }
 
-        private void ClearCache()
+        private void ClearBuildingCache()
         {
             tileDb.ToList().ForEach(t => Destroy(t.Value));
-            tileDb.Clear();
-            downloadQueue.Clear();
-            pendingQueue.Clear();         
+            tileDb.Clear();          
         }
 
         private Vector3 GetTilePosition(TileIndex index, TileRange tileRange)
@@ -615,10 +643,16 @@ namespace Terrain
                         StartCoroutine(RequestSurfaceTile(request.Url, request.TileId));
                         break;
                     case DataType.Buildings:
-                        StartCoroutine(RequestBuildingTile(request.Url, request.TileId)); //hack tileid is now offset, add datatype 
+                        StartCoroutine(RequestBuildingTile(request.Url, request.TileId)); //hack tileid is now offset, add datatype                    
+                        break;
+                    case DataType.BuildingRootTile:
+                        StartCoroutine(RequestBuildingRootTile(request.Url));                   
                         break;
                     case DataType.Trees:
                         StartCoroutine(RequestTreeTile(request.Url));
+                        break;
+                    case DataType.TreeCollection:
+                        StartCoroutine(RequestTreeCollection(request.Url));
                         break;
                 }
             }
@@ -629,6 +663,9 @@ namespace Terrain
             if ((zoomLevel + 1) <= terrain.maxZoom) 
             {
                 zoomLevel++;
+
+                downloadQueue.Clear();
+                pendingQueue.Clear();
                 LoadMap();
             }
         }
@@ -638,6 +675,8 @@ namespace Terrain
             if ((zoomLevel - 1) >= terrain.minZoom)
             {
                 zoomLevel--;
+                downloadQueue.Clear();
+                pendingQueue.Clear();
                 LoadMap();
             }            
         }

@@ -4,7 +4,8 @@
       "Name": "AHN3 (NL)",
       "DataType": "Terrain",
       "Service": "QM",
-      "Url": "https://saturnus.geodan.nl/tomt/data/tiles/{z}/{x}/{y}.terrain?v=1.0.0",
+      "Url": [ "https://saturnus.geodan.nl/tomt/data/tiles/{z}/{x}/{y}.terrain?v=1.0.0" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -19,7 +20,8 @@
       "Name": "AGI (World)",
       "DataType": "Terrain",
       "Service": "QM",
-      "Url": "https://maps.tilehosting.com/data/terrain-quantized-mesh/{z}/{x}/{y}.terrain?key=irAs6FzTF3gJ9ArfQPjh",
+      "Url": [ "https://maps.tilehosting.com/data/terrain-quantized-mesh/{z}/{x}/{y}.terrain?key=irAs6FzTF3gJ9ArfQPjh" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -34,7 +36,8 @@
       "Name": "Ahocevar (World)",
       "DataType": "Surface",
       "Service": "WMS",
-      "Url": "https://ahocevar.com/geoserver/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=ne%3ANE1_HR_LC_SR_W_DR&TILED=true&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&STYLES=&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}",
+      "Url": [ "https://ahocevar.com/geoserver/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=ne%3ANE1_HR_LC_SR_W_DR&TILED=true&WIDTH=256&HEIGHT=256&CRS=EPSG%3A4326&STYLES=&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -49,7 +52,8 @@
       "Name": "BGT (NL)",
       "DataType": "Surface",
       "Service": "WMS",
-      "Url": "https://saturnus.geodan.nl/mapproxy/bgt/service?service=WMS&version=1.1.1&request=GetMap&styles=&format=image%2Fjpeg&layers=bgt&bbox={xMin}%2C{yMin}%2C{xMax}%2C{yMax}&width=256&height=256&srs=EPSG%3A4326",
+      "Url": [ "https://saturnus.geodan.nl/mapproxy/bgt/service?service=WMS&version=1.1.1&request=GetMap&styles=&format=image%2Fjpeg&layers=bgt&bbox={xMin}%2C{yMin}%2C{xMax}%2C{yMax}&width=256&height=256&srs=EPSG%3A4326" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -64,7 +68,8 @@
       "Name": "Satellite (NL)",
       "DataType": "Surface",
       "Service": "WMS",
-      "Url": "https://geodata.nationaalgeoregister.nl/luchtfoto/rgb/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=2016_ortho25&STYLES&CRS=EPSG%3A4326&WIDTH=256&HEIGHT=256&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}",
+      "Url": [ "https://geodata.nationaalgeoregister.nl/luchtfoto/rgb/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=2016_ortho25&STYLES&CRS=EPSG%3A4326&WIDTH=256&HEIGHT=256&bbox={yMin}%2C{xMin}%2C{yMax}%2C{xMax}" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -79,7 +84,8 @@
       "Name": "BAG LoD 1 (NL)",
       "DataType": "Buildings",
       "Service": "B3DM_3DTILE",
-      "Url": "https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/",
+      "Url": [ "https://saturnus.geodan.nl/tomt/data/buildingtiles_adam/" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -94,7 +100,9 @@
       "Name": "BAG LoD 2 (NL)",
       "DataType": "Buildings",
       "Service": "B3DM_3DTILE",
-      "Url": "https://saturnus.geodan.nl/tomt/data/buildingtiles_texel/",
+      "Url": ["https://saturnus.geodan.nl/tomt/data/buildingtiles_oudeschild/" ],
+      //"Url": [ "https://saturnus.geodan.nl/tomt/data/buildingtiles_texel/", "https://saturnus.geodan.nl/tomt/data/buildingtiles_oudeschild/" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -109,7 +117,8 @@
       "Name": "AHN3 Trees (NL)",
       "DataType": "Trees",
       "Service": "PNTS_3DTILE",
-      "Url": "https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_121000-487000/",
+      "Url": [ "https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_121000-487000/" ],
+      "Collection": [],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -124,7 +133,8 @@
       "Name": "AHN3 Trees Texel(NL)",
       "DataType": "Trees",
       "Service": "PNTS_3DTILE",
-      "Url": "https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_119000-568000/",
+      "Url": [ "https://saturnus.geodan.nl/tomt/data/treesets/" ],
+      "Collection": [ "cesium_trees_109000-557000", "cesium_trees_113000-563000", "cesium_trees_116000-568000", "cesium_trees_119000-567000", "cesium_trees_109000-558000", "cesium_trees_113000-564000", "cesium_trees_116000-569000", "cesium_trees_119000-568000", "cesium_trees_109000-559000", "cesium_trees_113000-565000", "cesium_trees_116000-570000", "cesium_trees_119000-569000", "cesium_trees_109000-560000", "cesium_trees_113000-566000", "cesium_trees_116000-571000", "cesium_trees_119000-570000", "cesium_trees_109000-561000", "cesium_trees_113000-567000", "cesium_trees_116000-572000", "cesium_trees_119000-571000", "cesium_trees_109000-562000", "cesium_trees_113000-568000", "cesium_trees_116000-573000", "cesium_trees_119000-572000", "cesium_trees_110000-556000", "cesium_trees_113000-569000", "cesium_trees_116000-574000", "cesium_trees_119000-573000", "cesium_trees_110000-557000", "cesium_trees_113000-570000", "cesium_trees_117000-560000", "cesium_trees_119000-574000", "cesium_trees_110000-558000", "cesium_trees_114000-557000", "cesium_trees_117000-561000", "cesium_trees_119000-575000", "cesium_trees_110000-559000", "cesium_trees_114000-558000", "cesium_trees_117000-562000", "cesium_trees_119000-576000", "cesium_trees_110000-560000", "cesium_trees_114000-559000", "cesium_trees_117000-563000", "cesium_trees_119000-577000", "cesium_trees_110000-561000", "cesium_trees_114000-560000", "cesium_trees_117000-564000", "cesium_trees_120000-563000", "cesium_trees_110000-562000", "cesium_trees_114000-561000", "cesium_trees_117000-565000", "cesium_trees_120000-564000", "cesium_trees_110000-563000", "cesium_trees_114000-562000", "cesium_trees_117000-566000", "cesium_trees_120000-565000", "cesium_trees_110000-564000", "cesium_trees_114000-563000", "cesium_trees_117000-567000", "cesium_trees_120000-566000", "cesium_trees_110000-565000", "cesium_trees_114000-564000", "cesium_trees_117000-568000", "cesium_trees_120000-567000", "cesium_trees_111000-556000", "cesium_trees_114000-565000", "cesium_trees_117000-569000", "cesium_trees_120000-568000", "cesium_trees_111000-557000", "cesium_trees_114000-566000", "cesium_trees_117000-570000", "cesium_trees_120000-569000", "cesium_trees_111000-558000", "cesium_trees_114000-567000", "cesium_trees_117000-571000", "cesium_trees_120000-570000", "cesium_trees_111000-559000", "cesium_trees_114000-568000", "cesium_trees_117000-572000", "cesium_trees_120000-571000", "cesium_trees_111000-560000", "cesium_trees_114000-569000", "cesium_trees_117000-573000", "cesium_trees_120000-572000", "cesium_trees_111000-561000", "cesium_trees_114000-570000", "cesium_trees_117000-574000", "cesium_trees_120000-573000", "cesium_trees_111000-562000", "cesium_trees_114000-571000", "cesium_trees_117000-575000", "cesium_trees_120000-574000", "cesium_trees_111000-563000", "cesium_trees_115000-557000", "cesium_trees_117000-576000", "cesium_trees_120000-575000", "cesium_trees_111000-564000", "cesium_trees_115000-558000", "cesium_trees_118000-560000", "cesium_trees_120000-576000", "cesium_trees_111000-565000", "cesium_trees_115000-559000", "cesium_trees_118000-561000", "cesium_trees_120000-577000", "cesium_trees_111000-566000", "cesium_trees_115000-560000", "cesium_trees_118000-562000", "cesium_trees_121000-565000", "cesium_trees_111000-567000", "cesium_trees_115000-561000", "cesium_trees_118000-563000", "cesium_trees_121000-566000", "cesium_trees_112000-556000", "cesium_trees_115000-562000", "cesium_trees_118000-564000", "cesium_trees_121000-567000", "cesium_trees_112000-557000", "cesium_trees_115000-563000", "cesium_trees_118000-565000", "cesium_trees_121000-568000", "cesium_trees_112000-558000", "cesium_trees_115000-564000", "cesium_trees_118000-566000", "cesium_trees_121000-569000", "cesium_trees_112000-559000", "cesium_trees_115000-565000", "cesium_trees_118000-567000", "cesium_trees_121000-570000", "cesium_trees_112000-560000", "cesium_trees_115000-566000", "cesium_trees_118000-568000", "cesium_trees_121000-571000", "cesium_trees_112000-561000", "cesium_trees_115000-567000", "cesium_trees_118000-569000", "cesium_trees_121000-572000", "cesium_trees_112000-562000", "cesium_trees_115000-568000", "cesium_trees_118000-570000", "cesium_trees_121000-573000", "cesium_trees_112000-563000", "cesium_trees_115000-569000", "cesium_trees_118000-571000", "cesium_trees_121000-574000", "cesium_trees_112000-564000", "cesium_trees_115000-570000", "cesium_trees_118000-572000", "cesium_trees_122000-565000", "cesium_trees_112000-565000", "cesium_trees_115000-571000", "cesium_trees_118000-573000", "cesium_trees_122000-566000", "cesium_trees_112000-566000", "cesium_trees_115000-572000", "cesium_trees_118000-574000", "cesium_trees_122000-567000", "cesium_trees_112000-567000", "cesium_trees_116000-559000", "cesium_trees_118000-575000", "cesium_trees_122000-568000", "cesium_trees_112000-568000", "cesium_trees_116000-560000", "cesium_trees_118000-576000", "cesium_trees_122000-569000", "cesium_trees_113000-556000", "cesium_trees_116000-561000", "cesium_trees_118000-577000", "cesium_trees_122000-570000", "cesium_trees_113000-557000", "cesium_trees_116000-562000", "cesium_trees_119000-561000", "cesium_trees_122000-571000", "cesium_trees_113000-558000", "cesium_trees_116000-563000", "cesium_trees_119000-562000", "cesium_trees_122000-572000", "cesium_trees_113000-559000", "cesium_trees_116000-564000", "cesium_trees_119000-563000", "cesium_trees_122000-573000", "cesium_trees_113000-560000", "cesium_trees_116000-565000", "cesium_trees_119000-564000", "cesium_trees_113000-561000", "cesium_trees_116000-566000", "cesium_trees_119000-565000", "cesium_trees_113000-562000", "cesium_trees_116000-567000", "cesium_trees_119000-566000" ],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -168,10 +178,10 @@
     {
       "Name": "Texel",
       "WGS84Bounds": {
-        "minLon": "4.78",
+        "minLon": "4.70",
         "minLat": "53.02",
-        "maxLon": "4.87",
-        "maxLat": "53.06"
+        "maxLon": "4.90",
+        "maxLat": "53.16"
       }
     }
   ]

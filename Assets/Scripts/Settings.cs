@@ -20,7 +20,9 @@ namespace Terrain
         Terrain,
         Surface,
         Buildings,
-        Trees
+        BuildingRootTile,
+        Trees,
+        TreeCollection
     }
 
     [Serializable]
@@ -36,7 +38,8 @@ namespace Terrain
         public string Name { get; set; }
         public DataType DataType { get; set; }
         public DataService Service { get; set; }
-        public string Url { get; set; }
+        public string[] Url { get; set; }
+        public string[] Collection {get;set;}
         public int EPSG { get; set; }
         public int minZoom { get; set; }
         public int maxZoom { get; set; }
