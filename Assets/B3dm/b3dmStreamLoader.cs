@@ -70,7 +70,7 @@ public class b3dmStreamLoader : MonoBehaviour
 
             foreach (var c in json.root.children)
             {
-                tiles.Add(c.content.url);
+                tiles.Add(c.content.uri);
 
                 if (c.children.Length > 0)
                     AddToTiles(c.children, tiles);
@@ -98,7 +98,7 @@ public class b3dmStreamLoader : MonoBehaviour
     {
         foreach (var c in children)
         {
-            tiles.Add(c.content.url);
+            tiles.Add(c.content.uri);
 
             if (c.children.Length > 0)
                 AddToTiles(c.children, tiles);

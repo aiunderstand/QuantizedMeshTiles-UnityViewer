@@ -25,7 +25,7 @@ namespace Terrain
     public class MapViewer : MonoBehaviour
     {
         Extent extent;
-        int zoomLevel = 13;
+        int zoomLevel = 15;
 
         [SerializeField]
         private GameObject placeholderTile;
@@ -42,11 +42,11 @@ namespace Terrain
         private TMP_Dropdown surfaceDropdown;
         private TMP_Dropdown buildingsDropdown;
         private TMP_Dropdown treesDropdown;
-       
+
         //implement will use floating origin
-        Vector2 floatingOrigin;
-        const float UnityUnitsPerGraadX = 68600;
-        const float UnityUnitsPerGraadY = 111300;
+        public static Vector2 floatingOrigin;
+        public static float UnityUnitsPerGraadX = 68600;
+        public static float UnityUnitsPerGraadY = 111300;
         readonly Dictionary<Vector3, GameObject> tileDb = new Dictionary<Vector3, GameObject>();
 
         const int maxParallelRequests = 4;
@@ -54,6 +54,8 @@ namespace Terrain
         readonly Dictionary<string, DownloadRequest> pendingQueue = new Dictionary<string, DownloadRequest>(maxParallelRequests);
         Settings settings;
         int maxDepthLevel = 0; //increase to allow more pointcloud detail (zoom levels)
+        public static Vector3 Offset;
+
 
         [UsedImplicitly]
         private void Awake()
@@ -323,12 +325,12 @@ namespace Terrain
 
                 foreach (var c in json.root.children)
                 {
-                    tiles.Add(url + c.content.url);
+                    tiles.Add(url + c.content.uri);
 
                     if (c.children != null)
                         AddToTiles(c.children, tiles, url);
                 }
-           
+
                 //get translation offset
                 var dist_x = new Distance(json.root.transform[12], DistanceUnit.Meters); //lon
                 var dist_y = new Distance(json.root.transform[13], DistanceUnit.Meters); //lat
@@ -344,12 +346,14 @@ namespace Terrain
                 var xv = (x - floatingOrigin.x) * UnityUnitsPerGraadX;
                 var zv = (z - floatingOrigin.y) * UnityUnitsPerGraadY;
 
-                var offset = new Vector3((float)xv, (float)height, (float)zv);
+                Offset = new Vector3((float)xv, (float)height, (float)zv);
+
+                //Offset = new Vector3(json.root.transform[12], json.root.transform[13], json.root.transform[14]);
 
                 //download and load tiles
                 for (int i = 0; i < tiles.Count; i++)
                 {
-                    downloadQueue.Enqueue(new DownloadRequest(tiles[i], DataType.Buildings, offset));
+                    downloadQueue.Enqueue(new DownloadRequest(tiles[i], DataType.Buildings, Vector3.zero));
                 }
                
             }
@@ -363,7 +367,7 @@ namespace Terrain
         {
             foreach (var c in children)
             {
-                tiles.Add(url + c.content.url);
+                tiles.Add(url + c.content.uri);
 
                 if (c.children != null)
                     AddToTiles(c.children, tiles, url);
@@ -404,7 +408,7 @@ namespace Terrain
                 var b3dm = B3dmParser.ParseB3dm(stream); //set to false because currently no batchtable is supplied in adam datasources. When adding eg. BagID's, this needs to be set to true + plus batchtable implementation.
                 //Debug.Log(b3dm.Glb.GltfModelJson);
                 var memoryStream = new MemoryStream(b3dm.GlbData);
-                Load(memoryStream, offset);
+                Load(memoryStream);
             }
             else
             {
@@ -414,12 +418,12 @@ namespace Terrain
             pendingQueue.Remove(url);
         }
 
-        private void Load(Stream stream, Vector3 offset)
+        private void Load(Stream stream)
         {
             GLTFRoot gLTFRoot;
             GLTFParser.ParseJson(stream, out gLTFRoot);
             var loader = new GLTFSceneImporter(gLTFRoot, null, null, stream);
-            loader.Offset = offset;
+            loader.Offset = Offset;
             loader.LoadSceneAsync();
         }
 

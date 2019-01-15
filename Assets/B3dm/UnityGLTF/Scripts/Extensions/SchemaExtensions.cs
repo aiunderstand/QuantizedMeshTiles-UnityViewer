@@ -1,5 +1,7 @@
-﻿using GLTF;
+﻿using DotSpatial.Positioning;
+using GLTF;
 using GLTF.Schema;
+using Terrain;
 using UnityEngine;
 
 namespace UnityGLTF.Extensions
@@ -281,7 +283,7 @@ namespace UnityGLTF.Extensions
 			return outVecArr;
 		}
 
-		public static Vector4 ToUnityVector4Raw(this GLTF.Math.Vector4 vec4)
+        public static Vector4 ToUnityVector4Raw(this GLTF.Math.Vector4 vec4)
 		{
 			return new Vector4(vec4.X, vec4.Y, vec4.Z, vec4.W);
 		}

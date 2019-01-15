@@ -920,8 +920,8 @@ namespace UnityGLTF
 			Vector3 scale;
             node.GetUnityTRSProperties(out position, out rotation, out scale);
 
-            nodeObj.transform.localPosition = Offset; //new Vector3(-454,48,471); //position -322,6 42,3 237
-            nodeObj.transform.localRotation = Quaternion.Euler(new Vector3(-52.8f, 0, -85.8f));//Quaternion.Euler(new Vector3(-52.8f, 0, -85.8f)); // rotation; 52.7,3 0 -95,4
+            nodeObj.transform.localPosition = position;
+            nodeObj.transform.localRotation = Quaternion.Euler(new Vector3(-52.3730737323776f,0, -4.89474124120133f));//Quaternion.Euler(new Vector3(-52.8f, 0, -85.8f)); // rotation; 52.7,3 0 -95,4
             nodeObj.transform.localScale = scale;
 
 			if (node.Mesh != null)

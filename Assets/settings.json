@@ -117,8 +117,8 @@
       "Name": "AHN3 Trees (NL)",
       "DataType": "Trees",
       "Service": "PNTS_3DTILE",
-      "Url": [ "https://saturnus.geodan.nl/tomt/data/treesets/cesium_trees_121000-487000/" ],
-      "Collection": [],
+      "Url": [ "https://saturnus.geodan.nl/tomt/data/treesets/" ],
+      "Collection": [ "cesium_trees_121000-487000" ],
       "EPSG": "4326",
       "WGS84Bounds": {
         "minLon": "-180",
@@ -150,12 +150,12 @@
   "Locations": [
     {
       "Name": "Amsterdam",
-      "WGS84Bounds": {
-        "minLon": "4.88",
-        "minLat": "52.36",
-        "maxLon": "4.92",
-        "maxLat": "52.38"
-      }
+        "WGS84Bounds": {
+            "minLon": "4.89474124120133",
+            "minLat": "52.3730737323776",
+            "maxLon": "4.92",
+            "maxLat": "52.38"
+        }
     },
     {
       "Name": "Ispra",
@@ -178,10 +178,10 @@
     {
       "Name": "Texel",
       "WGS84Bounds": {
-        "minLon": "4.70",
-        "minLat": "53.02",
-        "maxLon": "4.90",
-        "maxLat": "53.16"
+        "minLon": "4.84",
+        "minLat": "53.03",
+        "maxLon": "4.85",
+        "maxLat": "53.035"
       }
     }
   ]
